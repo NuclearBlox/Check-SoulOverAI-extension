@@ -345,7 +345,10 @@ let hideTimer;
             if (status.my_current_vote === 'human') vH.classList.add('voted-h');
             if (status.my_current_vote === 'ai') vA.classList.add('voted-a');
             vH.onclick = () => castVote(artist, 'human', badge, platformClass);
-            vA.onclick = () => castVote(artist, 'ai', badge, platformClass);
+            vA.onclick = () => {
+                castVote(artist, 'ai', badge, platformClass);
+                nextButton.click();
+            };
         }
 
         shadow.querySelector('#skip-in').value = threshold;
