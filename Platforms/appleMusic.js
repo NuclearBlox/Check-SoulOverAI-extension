@@ -88,7 +88,7 @@ async function init() {
                 lastName = element.innerHTML
                 console.log("New artist: "+lastName)
                 const actionButtons = document.querySelector(".action-buttons")
-                const nextButton = document.querySelector(".button--next")
+                const nextButton = Array.from(document.querySelectorAll("amp-playback-controls-item-skip")).at(-1);
                 if (!actionButtons) return;
                 const badgeLocation = Array.from(actionButtons.children)
                     .filter(child => !child.classList.contains('ai-warning-container') && !child.classList.contains('human-container'))
