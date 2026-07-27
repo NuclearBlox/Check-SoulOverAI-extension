@@ -41,9 +41,14 @@ function clamp(value, min, max) {
     return Math.max(min, Math.min(value, max));
 }
 
+function getAppleMusicControlHeight(actionButtons) {
+    const button = actionButtons?.querySelector('button') || actionButtons.firstElementChild;
+    return button.offsetHeight || 28;
+}
+
 function getAppleMusicBadgeWidths(actionButtons) {
     const button = actionButtons?.querySelector('button') || actionButtons?.firstElementChild;
-    const buttonHeight = button?.offsetHeight || 28;
+    const buttonHeight = getAppleMusicControlHeight(actionButtons);
     const badgeHeight = clamp(Math.round(buttonHeight * 0.72), 18, 24);
 
     return {
@@ -51,15 +56,20 @@ function getAppleMusicBadgeWidths(actionButtons) {
         human: Math.round(badgeHeight * 3.0) + 'px'
     };
 }
-
 function alignAppleMusicBadge(badge, actionButtons) {
     const badgeContainer = badge.parentElement;
+    const controlHeight = getAppleMusicControlHeight(actionButtons);
+    const badgeHeight = clamp(Math.round(controlHeight * 0.72), 18, 24);
 
     badgeContainer.style.display = 'inline-flex';
     badgeContainer.style.alignItems = 'center';
-    badgeContainer.style.height = actionButtons.offsetHeight + 'px';
-    badge.style.marginTop = 'auto';
-    badge.style.marginBottom = 'auto';
+    badgeContainer.style.alignSelf = 'center';
+    badgeContainer.style.flex = '0 0 auto';
+    badgeContainer.style.height = controlHeight + 'px';
+    badgeContainer.style.lineHeight = '0';
+    badge.style.width = 'auto';
+    badge.style.height = badgeHeight + 'px';
+    badge.style.display = 'block';
 }
 
 async function init() {
@@ -79,7 +89,11 @@ async function init() {
                 console.log("New artist: "+lastName)
                 const actionButtons = document.querySelector(".action-buttons")
                 const nextButton = document.querySelector(".button--next")
-                const badgeLocation = actionButtons.lastElementChild
+                if (!actionButtons) return;
+                const badgeLocation = Array.from(actionButtons.children)
+                    .filter(child => !child.classList.contains('ai-warning-container') && !child.classList.contains('human-container'))
+                    .at(-1);
+                if (!badgeLocation) return;
                 const badgeWidths = getAppleMusicBadgeWidths(actionButtons)
                 const badge = await DecideBadge(badgeWidths.ai, badgeWidths.human, 'span.marquee-line__fragment:first-child button.lcd-meta-line__fragment', badgeLocation, nextButton, '0px', 'music')
                 alignAppleMusicBadge(badge, actionButtons)
