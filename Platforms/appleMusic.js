@@ -87,16 +87,7 @@ async function init() {
             if (element.innerHTML != lastName) {
                 lastName = element.innerHTML
                 console.log("New artist: "+lastName)
-                const actionButtons = document.querySelector(".action-buttons")
-                const nextButton = Array.from(document.querySelectorAll("amp-playback-controls-item-skip")).at(-1);
-                if (!actionButtons) return;
-                const badgeLocation = Array.from(actionButtons.children)
-                    .filter(child => !child.classList.contains('ai-warning-container') && !child.classList.contains('human-container'))
-                    .at(-1);
-                if (!badgeLocation) return;
-                const badgeWidths = getAppleMusicBadgeWidths(actionButtons)
-                const badge = await DecideBadge(badgeWidths.ai, badgeWidths.human, 'span.marquee-line__fragment:first-child button.lcd-meta-line__fragment', badgeLocation, nextButton, '0px', 'music')
-                alignAppleMusicBadge(badge, actionButtons)
+                return
             }
         }
     }, 200);
