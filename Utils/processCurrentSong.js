@@ -16,8 +16,7 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
         const total = status.out_human + status.out_ai;
 
         if (total === 0) {
-            ShowNoDataBadge(humanWidth, badgeLocation, artistName, padding, true, platformClass);
-            return;
+            return ShowNoDataBadge(humanWidth, badgeLocation, artistName, padding, true, platformClass);
         }
 
         const isAI = status.out_ai > status.out_human;
@@ -28,7 +27,7 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
         const isVerified = status.out_verified;
 
         if (isAI) {
-            ShowWarningBadge(AIwidth, badgeLocation, artistName, padding, true, isLean, isVerified, platformClass);
+            const badge = ShowWarningBadge(AIwidth, badgeLocation, artistName, padding, true, isLean, isVerified, platformClass);
             const { minVotes } = await chrome.storage.local.get('minVotes');
             if (total >= (minVotes ?? 3) && skipElement) {
                 const { threshold } = await chrome.storage.local.get('threshold');
@@ -37,11 +36,12 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
                     skipElement.click();
                 }
             }
+            return badge;
         } else {
-            ShowHumanBadge(humanWidth, badgeLocation, artistName, padding, true, isLean, isVerified, platformClass);
+            return ShowHumanBadge(humanWidth, badgeLocation, artistName, padding, true, isLean, isVerified, platformClass);
         }
     } catch (err) {
         console.error("Supabase Error:", err);
-        ShowNoDataBadge(humanWidth, badgeLocation, artistName, padding, true, platformClass);
+        return ShowNoDataBadge(humanWidth, badgeLocation, artistName, padding, true, platformClass);
     }
 };
