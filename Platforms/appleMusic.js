@@ -247,6 +247,15 @@ async function injectMiniplayerDisplay() {
 let nameChangeOverrideCheck = false
 let artworkBadgeInjecting = false
 
+async function beginLyricsPingPong() {
+    while (true) {
+        await waitForElement('.mobile-lyrics');
+        nameChangeOverrideCheck = true
+        await waitForElementRemoved('.mobile-lyrics');
+        nameChangeOverrideCheck = true
+    }
+}
+
 async function injectArtworkBadge() {
     const nextButton = Array.from(document.querySelectorAll("amp-playback-controls-item-skip")).at(-1);
     const miniplayer = document.querySelector('div[data-testid="mini-player-container"]')
@@ -338,6 +347,7 @@ async function init() {
         }
     }, 200);
     updatePage()
+    beginLyricsPingPong()
 }
 
 init()
