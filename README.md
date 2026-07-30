@@ -26,6 +26,4 @@ It automatically checks the current track against SlopCall, an API built specifi
 
 Very basic right now, much to be improved!
 
-(thanks to [Fudge21](https://github.com/fudge21) for Apple music support!...which is broken right now)
-
 ![Image showing how anyone can vote!](Examples/VoteYourSelf.png)
