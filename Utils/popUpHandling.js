@@ -1,90 +1,94 @@
 let hideTimer;
-    const supabaseUrl = 'https://solsneywdlhvwbtghopw.supabase.co';
-    const supabaseKey = 'sb_publishable_dlFufI-1QXA4VJdGoMWxMw_ouWHyl3k';
+const supabaseUrl = 'https://solsneywdlhvwbtghopw.supabase.co';
+const supabaseKey = 'sb_publishable_dlFufI-1QXA4VJdGoMWxMw_ouWHyl3k';
 
-    if (!window.supabaseClient) {
-        window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-    }
+if (!window.supabaseClient) {
+    window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+}
 
-    const DEFAULT_STATUS = { out_human: 0, out_ai: 0, out_score: 0, out_verified: false, my_current_vote: null };
+const DEFAULT_STATUS = { out_human: 0, out_ai: 0, out_score: 0, out_verified: false, my_current_vote: null };
 
-    const VERIFIED_ICON = `
+const VERIFIED_ICON = `
         <span class="tooltip-wrap">
             <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 -960 960 960" fill="#22c55e" style="flex-shrink:0;display:block">
                 <path d="m344-60-76-128-144-32 14-148-98-112 98-112-14-148 144-32 76-128 136 58 136-58 76 128 144 32-14 148 98 112-98 112 14 148-144 32-76 128-136-58-136 58Zm94-278 226-226-56-58-170 170-86-84-56 58 142 140Z"/>
             </svg>
             <span class="tooltip">A human moderator has reviewed this artist and confirmed the rating — either through a high vote count or a resolved appeal.</span>
         </span>`;
-    const LOCK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="#71717a" style="flex-shrink:0">
+const LOCK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="#71717a" style="flex-shrink:0">
         <path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm240-200q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80Z"/>
     </svg>`;
 
-    function getVerdictColor(label, pct) {
-        if (label === 'AI') return pct >= 50 ? '#ef4444' : '#f59e0b';
-        if (label === 'HUMAN') return pct >= 50 ? '#22c55e' : '#10b981';
-        return '#71717a';
+function getVerdictColor(label, pct) {
+    if (label === 'AI') return pct >= 50 ? '#ef4444' : '#f59e0b';
+    if (label === 'HUMAN') return pct >= 50 ? '#22c55e' : '#10b981';
+    return '#71717a';
+}
+
+async function fetchArtistStatus(artist, platformClass) {
+    try {
+        const { data, error } = await window.supabaseClient.rpc('get_artist_status', {
+            target_id: artist.toLowerCase(),
+            platform_input: platformClass
+        });
+        if (error) { console.error('[AI Guard] get_artist_status error:', error); return DEFAULT_STATUS; }
+        if (Array.isArray(data) && data.length > 0) return data[0];
+        if (data && typeof data === 'object' && !Array.isArray(data)) return data;
+        return DEFAULT_STATUS;
+    } catch (err) {
+        console.error('[AI Guard] Fetch failed:', err);
+        return DEFAULT_STATUS;
+    }
+}
+
+function positionPopup(host, badge, container) {
+    const MARGIN = 12;
+    const POP_W = 360;
+
+    const rect = badge.getBoundingClientRect();
+    const popH = host.getBoundingClientRect().height ?? 260;
+    const parentRect = container.getBoundingClientRect();
+
+    // Default: centered above the badge
+    let left = rect.left + rect.width / 2 - POP_W / 2;
+    let top = rect.top - popH - MARGIN;
+
+    // Clamp horizontally within viewport
+    left = Math.max(MARGIN, Math.min(left, window.innerWidth - POP_W - MARGIN));
+
+    // If it goes off the top, flip below the badge
+    if (top < MARGIN) {
+        top = rect.bottom + MARGIN;
     }
 
-    async function fetchArtistStatus(artist, platformClass) {
-        try {
-            const { data, error } = await window.supabaseClient.rpc('get_artist_status', {
-                target_id: artist.toLowerCase(),
-                platform_input: platformClass
-            });
-            if (error) { console.error('[AI Guard] get_artist_status error:', error); return DEFAULT_STATUS; }
-            if (Array.isArray(data) && data.length > 0) return data[0];
-            if (data && typeof data === 'object' && !Array.isArray(data)) return data;
-            return DEFAULT_STATUS;
-        } catch (err) {
-            console.error('[AI Guard] Fetch failed:', err);
-            return DEFAULT_STATUS;
-        }
+    // If it now goes off the bottom, just clamp it
+    const maxTop = window.innerHeight - popH - MARGIN;
+    if (top > maxTop) {
+        top = Math.max(MARGIN, maxTop);
     }
 
-    function positionPopup(host, badge) {
-        const MARGIN = 12;
-        const POP_W = 360;
+    left -= parentRect.left;
+    top -= parentRect.top;
 
-        const rect = badge.getBoundingClientRect();
-        const popH = host.getBoundingClientRect().height ?? 260;
-
-        // Default: centered above the badge
-        let left = rect.left + rect.width / 2 - POP_W / 2;
-        let top = rect.top - popH - MARGIN;
-
-        // Clamp horizontally within viewport
-        left = Math.max(MARGIN, Math.min(left, window.innerWidth - POP_W - MARGIN));
-
-        // If it goes off the top, flip below the badge
-        if (top < MARGIN) {
-            top = rect.bottom + MARGIN;
-        }
-
-        // If it now goes off the bottom, just clamp it
-        const maxTop = window.innerHeight - popH - MARGIN;
-        if (top > maxTop) {
-            top = Math.max(MARGIN, maxTop);
-        }
-
-        host.style.cssText = `
-            position: fixed;
+    host.style.cssText = `
+            position: absolute;
             left: ${left}px;
             top: ${top}px;
             z-index: 2147483647;
         `;
-    }
+}
 
-    window.showPopup = async function(container, badge, human, artist, platformClass) {
-        clearTimeout(hideTimer);
-        const existingHost = document.body.querySelector('.ai-guard-wrapper');
-        if (existingHost) existingHost.remove();
+window.showPopup = async function (container, badge, human, artist, platformClass) {
+    clearTimeout(hideTimer);
+    const existingHost = document.querySelector('.ai-guard-wrapper');
+    if (existingHost) existingHost.remove();
 
-        const host = document.createElement('div');
-        host.className = 'ai-guard-wrapper';
-        const shadow = host.attachShadow({ mode: 'open' });
+    const host = document.createElement('div');
+    host.className = 'ai-guard-wrapper';
+    const shadow = host.attachShadow({ mode: 'open' });
 
-        const style = document.createElement('style');
-        style.textContent = `
+    const style = document.createElement('style');
+    style.textContent = `
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=JetBrains+Mono:wght@500&family=Saira+Extra+Condensed:wght@700;800&family=Bebas+Neue&display=swap');
 
             :host { 
@@ -227,9 +231,9 @@ let hideTimer;
             .appeal:hover .full { opacity: 1; width: auto; margin-left: 4px; }
         `;
 
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
             <div class="glow-orb" id="glow"></div>
             <div class="top">
                 <div class="name-box">
@@ -273,107 +277,107 @@ let hideTimer;
             </div>
         `;
 
-        // Set initial off-screen position to avoid flash, then append
-        host.style.cssText = 'position: fixed; left: -9999px; top: -9999px; z-index: 2147483647;';
-        shadow.appendChild(style);
-        shadow.appendChild(card);
-        document.body.appendChild(host);
+    // Set initial off-screen position to avoid flash, then append
+    host.style.cssText = 'position: absolute; left: -9999px; top: -9999px; z-index: 2147483647;';
+    shadow.appendChild(style);
+    shadow.appendChild(card);
+    container.appendChild(host);
 
-        // Position after the element is in the DOM so we can measure its height
-        requestAnimationFrame(() => positionPopup(host, badge));
+    // Position after the element is in the DOM so we can measure its height
+    requestAnimationFrame(() => positionPopup(host, badge, container));
 
-        host.onmouseenter = () => clearTimeout(hideTimer);
-        host.onmouseleave = () => window.hidePopup();
+    host.onmouseenter = () => clearTimeout(hideTimer);
+    host.onmouseleave = () => window.hidePopup();
 
-       const [status, thresholdRes, minVotesRes] = await Promise.all([
-    fetchArtistStatus(artist, platformClass),
-    chrome.storage.local.get('threshold'),
-    chrome.storage.local.get('minVotes')
-]);
+    const [status, thresholdRes, minVotesRes] = await Promise.all([
+        fetchArtistStatus(artist, platformClass),
+        chrome.storage.local.get('threshold'),
+        chrome.storage.local.get('minVotes')
+    ]);
 
-        if (!document.body.contains(host)) return;
+    if (!container.contains(host)) return;
 
-        // Re-position after data loads in case content height changed
-        requestAnimationFrame(() => positionPopup(host, badge));
+    // Re-position after data loads in case content height changed
+    requestAnimationFrame(() => positionPopup(host, badge, container));
 
 
-        const threshold = thresholdRes.threshold ?? 50;
-        const minVotes = minVotesRes.minVotes ?? 3;
-        const total = status.out_human + status.out_ai;
-        const isEmpty = total === 0;
-        let hPct = 0, aPct = 0, displayPct = 0, label = 'UNKNOWN';
+    const threshold = thresholdRes.threshold ?? 50;
+    const minVotes = minVotesRes.minVotes ?? 3;
+    const total = status.out_human + status.out_ai;
+    const isEmpty = total === 0;
+    let hPct = 0, aPct = 0, displayPct = 0, label = 'UNKNOWN';
 
-        if (!isEmpty) {
-            hPct = Math.round((status.out_human / total) * 100);
-            aPct = 100 - hPct;
-            displayPct = Math.round((Math.abs(status.out_human - status.out_ai) / total) * 100);
-            if (status.out_human > status.out_ai) label = 'HUMAN';
-            else if (status.out_ai > status.out_human) label = 'AI';
-            else label = 'TIE';
-        }
+    if (!isEmpty) {
+        hPct = Math.round((status.out_human / total) * 100);
+        aPct = 100 - hPct;
+        displayPct = Math.round((Math.abs(status.out_human - status.out_ai) / total) * 100);
+        if (status.out_human > status.out_ai) label = 'HUMAN';
+        else if (status.out_ai > status.out_human) label = 'AI';
+        else label = 'TIE';
+    }
 
-        const themeColor = getVerdictColor(label, displayPct);
+    const themeColor = getVerdictColor(label, displayPct);
 
-        // Badge AFTER the name
-        shadow.querySelector('.name').innerHTML =
-            `<span>${artist}</span>` + (status.out_verified ? VERIFIED_ICON : '');
+    // Badge AFTER the name
+    shadow.querySelector('.name').innerHTML =
+        `<span>${artist}</span>` + (status.out_verified ? VERIFIED_ICON : '');
 
-        shadow.querySelector('#glow').style.background = themeColor;
-        shadow.querySelector('.pct').style.color = themeColor;
-        shadow.querySelector('.pct').textContent = isEmpty ? '—%' : `${displayPct}%`;
-        shadow.querySelector('.tag').style.color = themeColor;
-        shadow.querySelector('.tag').textContent = label;
+    shadow.querySelector('#glow').style.background = themeColor;
+    shadow.querySelector('.pct').style.color = themeColor;
+    shadow.querySelector('.pct').textContent = isEmpty ? '—%' : `${displayPct}%`;
+    shadow.querySelector('.tag').style.color = themeColor;
+    shadow.querySelector('.tag').textContent = label;
 
-        shadow.querySelector('.meter-bar').innerHTML = isEmpty
-            ? '<div class="fill" style="width:100%;background:#3f3f46"></div>'
-            : `<div class="fill" style="width:${hPct}%;background:var(--human)"></div>
+    shadow.querySelector('.meter-bar').innerHTML = isEmpty
+        ? '<div class="fill" style="width:100%;background:#3f3f46"></div>'
+        : `<div class="fill" style="width:${hPct}%;background:var(--human)"></div>
                <div class="fill" style="width:${aPct}%;background:var(--ai)"></div>`;
 
-        const [humanStat, aiStat] = shadow.querySelectorAll('.stat-val');
-        humanStat.style.color = isEmpty ? '#3f3f46' : 'var(--human)';
-        humanStat.innerHTML = `<span class="plus">+</span>${status.out_human}<span class="stat-label">human</span>`;
-        aiStat.style.color = isEmpty ? '#3f3f46' : 'var(--ai)';
-        aiStat.innerHTML = `<span class="plus">+</span>${status.out_ai}<span class="stat-label">AI</span>`;
+    const [humanStat, aiStat] = shadow.querySelectorAll('.stat-val');
+    humanStat.style.color = isEmpty ? '#3f3f46' : 'var(--human)';
+    humanStat.innerHTML = `<span class="plus">+</span>${status.out_human}<span class="stat-label">human</span>`;
+    aiStat.style.color = isEmpty ? '#3f3f46' : 'var(--ai)';
+    aiStat.innerHTML = `<span class="plus">+</span>${status.out_ai}<span class="stat-label">AI</span>`;
 
-        const btns = shadow.querySelector('.btns');
-        if (status.out_verified) {
-            btns.innerHTML = `<button class="btn btn-locked">${LOCK_ICON} Voting locked · Moderated result</button>`;
-        } else {
-            const [vH, vA] = btns.querySelectorAll('.btn');
-            vH.removeAttribute('disabled');
-            vA.removeAttribute('disabled');
-            if (status.my_current_vote === 'human') vH.classList.add('voted-h');
-            if (status.my_current_vote === 'ai') vA.classList.add('voted-a');
-            vH.onclick = () => castVote(artist, 'human', badge, platformClass);
-            vA.onclick = () => castVote(artist, 'ai', badge, platformClass);
-        }
-
-        shadow.querySelector('#skip-in').value = threshold;
-        shadow.querySelector('#min-in').value = minVotes;
-        shadow.querySelector('#skip-in').onchange = (e) =>
-            chrome.storage.local.set({ threshold: e.target.value });
-
-         shadow.querySelector('#min-in').onchange = (e) =>
-            chrome.storage.local.set({ minVotes: e.target.value });
-    };
-
-    window.hidePopup = function() {
-        hideTimer = setTimeout(() => {
-            const host = document.body.querySelector('.ai-guard-wrapper');
-            if (host) host.remove();
-        }, 300);
-    };
-
-    async function castVote(artistName, type, badge, platformClass) {
-        try {
-            const { error } = await window.supabaseClient.rpc('handle_vote', {
-                artist_id_input: artistName,
-                vote_type_input: type,
-                platform_input: platformClass
-            });
-            if (error) console.error('[SoundProof] handle_vote error:', error);
-            window.showPopup(null, badge, null, artistName, platformClass);
-        } catch (err) {
-            console.error('[SoundProof] Vote failed:', err);
-        }
+    const btns = shadow.querySelector('.btns');
+    if (status.out_verified) {
+        btns.innerHTML = `<button class="btn btn-locked">${LOCK_ICON} Voting locked · Moderated result</button>`;
+    } else {
+        const [vH, vA] = btns.querySelectorAll('.btn');
+        vH.removeAttribute('disabled');
+        vA.removeAttribute('disabled');
+        if (status.my_current_vote === 'human') vH.classList.add('voted-h');
+        if (status.my_current_vote === 'ai') vA.classList.add('voted-a');
+        vH.onclick = () => castVote(artist, 'human', badge, platformClass);
+        vA.onclick = () => castVote(artist, 'ai', badge, platformClass);
     }
+
+    shadow.querySelector('#skip-in').value = threshold;
+    shadow.querySelector('#min-in').value = minVotes;
+    shadow.querySelector('#skip-in').onchange = (e) =>
+        chrome.storage.local.set({ threshold: e.target.value });
+
+    shadow.querySelector('#min-in').onchange = (e) =>
+        chrome.storage.local.set({ minVotes: e.target.value });
+};
+
+window.hidePopup = function () {
+    hideTimer = setTimeout(() => {
+        const host = document.querySelector('.ai-guard-wrapper');
+        if (host) host.remove();
+    }, 300);
+};
+
+async function castVote(artistName, type, badge, platformClass) {
+    try {
+        const { error } = await window.supabaseClient.rpc('handle_vote', {
+            artist_id_input: artistName,
+            vote_type_input: type,
+            platform_input: platformClass
+        });
+        if (error) console.error('[SoundProof] handle_vote error:', error);
+        window.showPopup(null, badge, null, artistName, platformClass);
+    } catch (err) {
+        console.error('[SoundProof] Vote failed:', err);
+    }
+}
