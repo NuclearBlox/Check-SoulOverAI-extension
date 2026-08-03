@@ -4,7 +4,7 @@ async function consultCache(artist) {
         const stored = await chrome.storage.local.get(artist);
         const cached = stored[artist];
 
-        if (cached && (Date.now() - cached.timestamp < 1 * 60 * 1000)) { // check if it expired
+        if (cached && (Date.now() - cached.timestamp < 1 * 60 * 1000)) { // check if it expired CURRENTLY SET TO 1 MINUTE FOR TESTING, CHANGE THIS LATER
             return cached.data;
         }
         return false;
