@@ -6,7 +6,7 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
     const artistName = (artistElement.dataset.soundproofId || artistElement.textContent.trim()).toLowerCase();
 
 
-        const status = await fetchDataFromSupabase(artistName, platformClass);
+        const status = await getArtistStatus(artistName, platformClass);
         const total = status.out_human + status.out_ai;
 
         if (total === 0) {
