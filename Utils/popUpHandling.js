@@ -1,5 +1,4 @@
-
-    let hideTimer;
+let hideTimer;
     const supabaseUrl = 'https://solsneywdlhvwbtghopw.supabase.co';
     const supabaseKey = 'sb_publishable_dlFufI-1QXA4VJdGoMWxMw_ouWHyl3k';
 
@@ -26,10 +25,11 @@
         return '#71717a';
     }
 
-    async function fetchArtistStatus(artist) {
+    async function fetchArtistStatus(artist, platformClass) {
         try {
             const { data, error } = await window.supabaseClient.rpc('get_artist_status', {
-                target_id: artist.toLowerCase()
+                target_id: artist.toLowerCase(),
+                platform_input: platformClass
             });
             if (error) { console.error('[AI Guard] get_artist_status error:', error); return DEFAULT_STATUS; }
             if (Array.isArray(data) && data.length > 0) return data[0];
@@ -41,7 +41,40 @@
         }
     }
 
-    window.showPopup = async function(container, badge, human, artist) {
+    function positionPopup(host, badge) {
+        const MARGIN = 12;
+        const POP_W = 360;
+
+        const rect = badge.getBoundingClientRect();
+        const popH = host.getBoundingClientRect().height ?? 260;
+
+        // Default: centered above the badge
+        let left = rect.left + rect.width / 2 - POP_W / 2;
+        let top = rect.top - popH - MARGIN;
+
+        // Clamp horizontally within viewport
+        left = Math.max(MARGIN, Math.min(left, window.innerWidth - POP_W - MARGIN));
+
+        // If it goes off the top, flip below the badge
+        if (top < MARGIN) {
+            top = rect.bottom + MARGIN;
+        }
+
+        // If it now goes off the bottom, just clamp it
+        const maxTop = window.innerHeight - popH - MARGIN;
+        if (top > maxTop) {
+            top = Math.max(MARGIN, maxTop);
+        }
+
+        host.style.cssText = `
+            position: fixed;
+            left: ${left}px;
+            top: ${top}px;
+            z-index: 2147483647;
+        `;
+    }
+
+    window.showPopup = async function(container, badge, human, artist, platformClass) {
         clearTimeout(hideTimer);
         const existingHost = document.body.querySelector('.ai-guard-wrapper');
         if (existingHost) existingHost.remove();
@@ -163,14 +196,23 @@
 
             .skip-input-wrapper { position: relative; display: flex; align-items: center; }
             .skip-in {
-                width: 52px; background: #18181b; border: 1.5px solid #333; color: var(--human);
+                width: 32px; background: #18181b; border: 1.5px solid #333; color: var(--human);
                 border-radius: 6px; text-align: left; font-family: 'Saira Extra Condensed', sans-serif;
                 font-size: 16px; font-weight: 700; padding: 3px 18px 3px 6px;
+                appearance: textfield; transition: border-color 0.2s;
+            }
+            .min-in {
+                width: 24px; background: #18181b; border: 1.5px solid #333; color: var(--human);
+                border-radius: 6px; text-align: left; font-family: 'Saira Extra Condensed', sans-serif;
+                font-size: 16px; font-weight: 700; padding: 3px 3px 3px 6px;
                 appearance: textfield; transition: border-color 0.2s;
             }
             .skip-in::-webkit-outer-spin-button,
             .skip-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
             .skip-in:focus { outline: none; border-color: var(--human); }
+                        .min-in::-webkit-outer-spin-button,
+            .min-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } /* im FAR too lazy to do it all fancy */
+            .min-in:focus { outline: none; border-color: var(--human); }
             .pct-symbol { position: absolute; right: 6px; font-size: 9px; color: var(--dim); pointer-events: none; }
             .ai-label { color: var(--dim); font-weight: 700; text-transform: uppercase; font-size: 9px; letter-spacing: 0.05em; }
 
@@ -192,7 +234,7 @@
             <div class="top">
                 <div class="name-box">
                     <div class="name">${artist}</div>
-                    <a href="https://github.com/NuclearBlox/Check-SoulOverAI-extension/wiki/How-songs-status-gets-decided" target="_blank" class="sub">Learn more →</a>
+                    <a href="https://github.com/NuclearBlox/Check-SoulOverAI-extension/wiki/How-songs-status-gets-decided" target="_blank" class="sub">How it works & FAQ →</a>
                 </div>
                 <div class="verdict">
                     <div class="pct" style="color:var(--dim)">—%</div>
@@ -210,35 +252,53 @@
             </div>
             <div class="footer">
                 <div class="skip">
-                    Skip past
-                    <div class="skip-input-wrapper">
-                        <input type="number" id="skip-in" class="skip-in" value="50">
-                        <span class="pct-symbol">%</span>
-                    </div>
-                    <span class="ai-label">AI</span>
-                </div>
+    Skip past
+
+    <div class="skip-input-wrapper">
+        <input type="number" id="skip-in" class="skip-in" value="50">
+        <span class="pct-symbol">%</span>
+    </div>
+    <span class="ai-label">AI</span>
+
+    <span style="margin-left:6px;">with</span>
+
+    <div class="min-votes-wrapper">
+        <input type="number" id="min-in" class="min-in" value="3">
+    </div>
+    <span class="ai-label">votes</span>
+</div>
                 <a href="https://github.com/NuclearBlox/Check-SoulOverAI-extension/wiki/Appealing-an-incorrect-rating" target="_blank" class="appeal">
                     <span>Appeal</span><span class="full">Mistake?</span>
                 </a>
             </div>
         `;
 
-        const rect = badge.getBoundingClientRect();
-        host.style.cssText = `position: fixed; left: ${rect.left + rect.width / 2}px; top: ${rect.top - 12}px; transform: translate(-50%, -100%); z-index: 2147483647;`;
+        // Set initial off-screen position to avoid flash, then append
+        host.style.cssText = 'position: fixed; left: -9999px; top: -9999px; z-index: 2147483647;';
         shadow.appendChild(style);
         shadow.appendChild(card);
         document.body.appendChild(host);
+
+        // Position after the element is in the DOM so we can measure its height
+        requestAnimationFrame(() => positionPopup(host, badge));
+
         host.onmouseenter = () => clearTimeout(hideTimer);
         host.onmouseleave = () => window.hidePopup();
 
-        const [status, res] = await Promise.all([
-            fetchArtistStatus(artist),
-            chrome.storage.local.get('threshold')
-        ]);
+       const [status, thresholdRes, minVotesRes] = await Promise.all([
+    fetchArtistStatus(artist, platformClass),
+    chrome.storage.local.get('threshold'),
+    chrome.storage.local.get('minVotes')
+]);
 
         if (!document.body.contains(host)) return;
 
-        const threshold = res.threshold || 50;
+        // Re-position after data loads in case content height changed
+        requestAnimationFrame(() => positionPopup(host, badge));
+
+
+        const threshold = thresholdRes.threshold ?? 50;
+        const minVotes = minVotesRes.minVotes ?? 3;
         const total = status.out_human + status.out_ai;
         const isEmpty = total === 0;
         let hPct = 0, aPct = 0, displayPct = 0, label = 'UNKNOWN';
@@ -284,13 +344,17 @@
             vA.removeAttribute('disabled');
             if (status.my_current_vote === 'human') vH.classList.add('voted-h');
             if (status.my_current_vote === 'ai') vA.classList.add('voted-a');
-            vH.onclick = () => castVote(artist, 'human', badge);
-            vA.onclick = () => castVote(artist, 'ai', badge);
+            vH.onclick = () => castVote(artist, 'human', badge, platformClass);
+            vA.onclick = () => castVote(artist, 'ai', badge, platformClass);
         }
 
         shadow.querySelector('#skip-in').value = threshold;
+        shadow.querySelector('#min-in').value = minVotes;
         shadow.querySelector('#skip-in').onchange = (e) =>
             chrome.storage.local.set({ threshold: e.target.value });
+
+         shadow.querySelector('#min-in').onchange = (e) =>
+            chrome.storage.local.set({ minVotes: e.target.value });
     };
 
     window.hidePopup = function() {
@@ -300,15 +364,16 @@
         }, 300);
     };
 
-    async function castVote(artistName, type, badge) {
+    async function castVote(artistName, type, badge, platformClass) {
         try {
             const { error } = await window.supabaseClient.rpc('handle_vote', {
                 artist_id_input: artistName,
-                vote_type_input: type
+                vote_type_input: type,
+                platform_input: platformClass
             });
-            if (error) console.error('[AI Guard] handle_vote error:', error);
-            window.showPopup(null, badge, null, artistName);
+            if (error) console.error('[SoundProof] handle_vote error:', error);
+            window.showPopup(null, badge, null, artistName, platformClass);
         } catch (err) {
-            console.error('[AI Guard] Vote failed:', err);
+            console.error('[SoundProof] Vote failed:', err);
         }
     }
