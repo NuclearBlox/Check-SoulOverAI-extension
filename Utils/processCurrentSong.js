@@ -7,7 +7,6 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
 
 
         const status = await fetchDataFromSupabase(artistName, platformClass);
-// const status = (data && data[0]) ? data[0] : { out_human: 0, out_ai: 0, out_score: 0, out_verified: false };
         const total = status.out_human + status.out_ai;
 
         if (total === 0) {
