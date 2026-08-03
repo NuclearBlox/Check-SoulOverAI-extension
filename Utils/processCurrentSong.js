@@ -5,14 +5,9 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
     // Use stamped handle if present (e.g. YouTube), otherwise fall back to display name
     const artistName = (artistElement.dataset.soundproofId || artistElement.textContent.trim()).toLowerCase();
 
-    try {
-        const { data, error } = await window.supabaseClient.rpc('get_artist_status', {
-            target_id: artistName,
-            platform_input: platformClass
-        });
 
-        const status = (data && data[0]) ? data[0] : { out_human: 0, out_ai: 0, out_score: 0, out_verified: false };
-
+        const status = await fetchDataFromSupabase(artistName, platformClass);
+// const status = (data && data[0]) ? data[0] : { out_human: 0, out_ai: 0, out_score: 0, out_verified: false };
         const total = status.out_human + status.out_ai;
 
         if (total === 0) {
@@ -40,8 +35,4 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
         } else {
             return ShowHumanBadge(humanWidth, badgeLocation, artistName, padding, true, isLean, isVerified, platformClass);
         }
-    } catch (err) {
-        console.error("Supabase Error:", err);
-        return ShowNoDataBadge(humanWidth, badgeLocation, artistName, padding, true, platformClass);
-    }
 };
