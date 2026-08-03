@@ -105,7 +105,7 @@ window.showPopup = async function (container, badge, human, artist, platformClas
             .card {
                 width: 360px; padding: 18px;
                 background: rgba(12, 12, 14, 0.82);
-                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
                 border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;
                 color: var(--text); font-family: 'Inter', sans-serif;
                 box-shadow: 0 12px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
@@ -238,7 +238,7 @@ window.showPopup = async function (container, badge, human, artist, platformClas
             <div class="top">
                 <div class="name-box">
                     <div class="name">${artist}</div>
-                    <a href="https://github.com/NuclearBlox/Check-SoulOverAI-extension/wiki/How-songs-status-gets-decided" target="_blank" class="sub">How it works & FAQ →</a>
+                    <a href="https://github.com/NuclearBlox/Check-SoulOverAI-extension/wiki/How-songs-status-gets-decided" target="_blank" class="sub">Learn more  →</a>
                 </div>
                 <div class="verdict">
                     <div class="pct" style="color:var(--dim)">—%</div>
