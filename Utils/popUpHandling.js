@@ -286,7 +286,7 @@ let hideTimer;
         host.onmouseleave = () => window.hidePopup();
 
        const [status, thresholdRes, minVotesRes] = await Promise.all([
-    fetchArtistStatus(artist, platformClass),
+    getArtistStatus(artist, platformClass, true), // Force refresh to get the latest data
     chrome.storage.local.get('threshold'),
     chrome.storage.local.get('minVotes')
 ]);
