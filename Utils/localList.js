@@ -1,0 +1,1 @@
+// File for handling the users personal blacklist and whitelist. for V6
