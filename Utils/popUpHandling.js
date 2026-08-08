@@ -124,6 +124,7 @@ let hideTimer;
                 transition: background 0.6s ease;
                 pointer-events: none;
             }
+                
             /* Everything sits above the glow */
             .top, .meter-bar, .stats, .btns, .footer { position: relative; z-index: 1; }
 
@@ -233,6 +234,7 @@ let hideTimer;
         card.className = 'card';
         card.innerHTML = `
             <div class="glow-orb" id="glow"></div>
+            <div id="locallist-banner"></div>
             <div class="top">
                 <div class="name-box">
                     <div class="name">${artist}</div>
