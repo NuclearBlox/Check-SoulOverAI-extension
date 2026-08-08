@@ -15,8 +15,8 @@
       "js": [
         "libs/supabase.js",
         "Utils/Badge.js",
-        "Utils/popUpHandling.js",
         "Utils/localList.js",
+        "Utils/popUpHandling.js",
         "Utils/artistData.js",
         "Utils/processCurrentSong.js",
         "Platforms/YtMusic.js"
@@ -28,8 +28,8 @@
       "js": [
         "libs/supabase.js",
         "Utils/Badge.js",
-        "Utils/popUpHandling.js",
         "Utils/localList.js",
+        "Utils/popUpHandling.js",
         "Utils/artistData.js",
         "Utils/processCurrentSong.js",
         "Platforms/spotify.js"
@@ -41,8 +41,8 @@
       "js": [
         "libs/supabase.js",
         "Utils/Badge.js",
-        "Utils/popUpHandling.js",
         "Utils/localList.js",
+        "Utils/popUpHandling.js",
         "Utils/artistData.js",
         "Utils/processCurrentSong.js",
         "Platforms/appleMusic.js"
@@ -54,8 +54,8 @@
       "js": [
         "libs/supabase.js",
         "Utils/Badge.js",
-        "Utils/popUpHandling.js",
         "Utils/localList.js",
+        "Utils/popUpHandling.js",
         "Utils/artistData.js",
         "Utils/processCurrentSong.js",
         "Platforms/soundcloud.js"
@@ -67,8 +67,8 @@
       "js": [
         "libs/supabase.js",
         "Utils/Badge.js",
-        "Utils/popUpHandling.js",
         "Utils/localList.js",
+        "Utils/popUpHandling.js",
         "Utils/artistData.js",
         "Utils/processCurrentSong.js",
         "Platforms/youtube.js"

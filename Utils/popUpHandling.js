@@ -43,40 +43,41 @@ let hideTimer;
         }
     }
 
-    function positionPopup(host, badge) {
-        const MARGIN = 12;
-        const POP_W = 360;
+function positionPopup(host, badge) {
+    const MARGIN = 12;
+    const POP_W = 360;
 
-        const rect = badge.getBoundingClientRect();
-        const popH = host.getBoundingClientRect().height ?? 260;
+    const rect = badge.getBoundingClientRect();
+    const popH = host.getBoundingClientRect().height ?? 260;
 
-        // Default: centered above the badge
-        let left = rect.left + rect.width / 2 - POP_W / 2;
-        let top = rect.top - popH - MARGIN;
+    let left = rect.left + rect.width / 2 - POP_W / 2;
+    let top = rect.top - popH - MARGIN;
 
-        // Clamp horizontally within viewport
-        left = Math.max(MARGIN, Math.min(left, window.innerWidth - POP_W - MARGIN));
+    left = Math.max(MARGIN, Math.min(left, window.innerWidth - POP_W - MARGIN));
 
-        // If it goes off the top, flip below the badge
-        if (top < MARGIN) {
-            top = rect.bottom + MARGIN;
-        }
-
-        // If it now goes off the bottom, just clamp it
-        const maxTop = window.innerHeight - popH - MARGIN;
-        if (top > maxTop) {
-            top = Math.max(MARGIN, maxTop);
-        }
-
-        host.style.cssText = `
-            position: fixed;
-            left: ${left}px;
-            top: ${top}px;
-            z-index: 2147483647;
-        `;
+    if (top < MARGIN) {
+        top = rect.bottom + MARGIN;
     }
 
+    const maxTop = window.innerHeight - popH - MARGIN;
+    if (top > maxTop) {
+        top = Math.max(MARGIN, maxTop);
+        // Clamping may now overlap the badge — push clear of it explicitly
+        if (top < rect.bottom + MARGIN && top + popH > rect.top - MARGIN) {
+            top = rect.top - popH - MARGIN;
+        }
+    }
+
+    host.style.cssText = `
+        position: fixed;
+        left: ${left}px;
+        top: ${top}px;
+        z-index: 2147483647;
+    `;
+}
+
     window.showPopup = async function(container, badge, human, artist, platformClass) {
+        console.log('showPopup called', Date.now(), new Error().stack)
         clearTimeout(hideTimer);
         const existingHost = document.body.querySelector('.ai-guard-wrapper');
         if (existingHost) existingHost.remove();
@@ -234,7 +235,6 @@ let hideTimer;
         card.className = 'card';
         card.innerHTML = `
             <div class="glow-orb" id="glow"></div>
-            <div id="locallist-banner"></div>
             <div class="top">
                 <div class="name-box">
                     <div class="name">${artist}</div>
@@ -279,8 +279,13 @@ let hideTimer;
 
         // Set initial off-screen position to avoid flash, then append
         host.style.cssText = 'position: fixed; left: -9999px; top: -9999px; z-index: 2147483647;';
-        shadow.appendChild(style);
-        shadow.appendChild(card);
+        const bannerHost = document.createElement('div');
+bannerHost.id = 'locallist-banner';
+bannerHost.style.display = 'none';
+
+shadow.appendChild(style);
+shadow.appendChild(bannerHost);
+shadow.appendChild(card);
         document.body.appendChild(host);
 
         // Position after the element is in the DOM so we can measure its height
@@ -354,6 +359,8 @@ let hideTimer;
 
         shadow.querySelector('#skip-in').value = threshold;
         shadow.querySelector('#min-in').value = minVotes;
+        await renderLocalListBanner(shadow, artist, platformClass, status, badge, label);
+        requestAnimationFrame(() => positionPopup(host, badge));
         shadow.querySelector('#skip-in').onchange = (e) =>
             chrome.storage.local.set({ threshold: e.target.value });
 
