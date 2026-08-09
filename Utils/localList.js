@@ -171,7 +171,7 @@ async function renderLocalListBanner(shadow, artist, platformClass, status, badg
         banner.innerHTML = `
             <div class="ll-text">
                 <span class="ll-title">AI artist skipped</span>
-                <span class="ll-sub">Verified AI ratings are skipped by on any threshold below 100%. Want to whitelist and always play it anyway?</span>
+                <span class="ll-sub">Verified AI artist are locked at 100%. Would you like to play their music anyway?</span>
             </div>
             <button class="ll-btn white" id="ll-whitelist">Whitelist</button>`;
     } else if (isVerified && label === 'HUMAN') {
