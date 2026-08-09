@@ -15,7 +15,7 @@ let hideTimer;
             <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 -960 960 960" fill="#22c55e" style="flex-shrink:0;display:block">
                 <path d="m344-60-76-128-144-32 14-148-98-112 98-112-14-148 144-32 76-128 136 58 136-58 76 128 144 32-14 148 98 112-98 112 14 148-144 32-76 128-136-58-136 58Zm94-278 226-226-56-58-170 170-86-84-56 58 142 140Z"/>
             </svg>
-            <span class="tooltip">A human moderator has reviewed this artist and confirmed the rating — either through a high vote count or a resolved appeal.</span>
+            <span class="tooltip">A human moderator has reviewed this artist and confirmed the rating — either through a high vote count or a resolved report.</span>
         </span>`;
     const LOCK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="#71717a" style="flex-shrink:0">
         <path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm240-200q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80Z"/>
@@ -272,7 +272,7 @@ function positionPopup(host, badge) {
     <span class="ai-label">votes</span>
 </div>
                 <a href="https://github.com/NuclearBlox/Check-SoulOverAI-extension/wiki/Appealing-an-incorrect-rating" target="_blank" class="appeal">
-                    <span>Appeal</span><span class="full">Mistake?</span>
+                    <span>Report</span><span class="full">Mistake?</span>
                 </a>
             </div>
         `;

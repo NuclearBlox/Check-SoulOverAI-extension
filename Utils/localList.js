@@ -1,5 +1,36 @@
-// File for handling the users personal blacklist and whitelist.
-// listType is 'white' or 'black'.
+
+const MESSAGES = { // Got a bit sick of digging through HTML to change these
+    whitelisted: {
+        title: "You whitelisted this artist",
+        sub: "Their music will always play regardless of score",
+        btn: "Remove"
+    },
+    blacklisted: {
+        title: "Artist blacklisted",
+        sub: "This artist is locked at 100% and skipped regardless of score",
+        btn: "Remove"
+    },
+    verifiedAi: {
+        title: "Verfied AI artist",
+        sub: "Verified AI artist are locked at 100%. Would you like to play their music anyway?",
+        btn: "Whitelist"
+    },
+    verifiedHuman: {
+        title: "Verified human artist",
+        sub: "This artist always plays. Would you like to blacklist them anyway? (report mistakes!)",
+        btn: "Blacklist"
+    },
+    votedAi: {
+        title: "Blacklist too?",
+        sub: "Blacklisting will set them to 100% and skip their music regardless of score",
+        btn: "Blacklist"
+    },
+    votedHuman: {
+        title: "Would you like to whitelist this artist?",
+        sub: "Whitelisting will always play them regardless of score",
+        btn: "Whitelist"
+    }
+};
 
 async function consultLocal(key) {
     try {
@@ -154,42 +185,50 @@ async function renderLocalListBanner(shadow, artist, platformClass, status, badg
         banner.className = 'white';
         banner.innerHTML = `
             <div class="ll-text">
-                <span class="ll-title">This artist is whitelisted!</span>
-                <span class="ll-sub">This artist will always play</span>
+                <span class="ll-title">${MESSAGES.whitelisted.title}</span>
+                <span class="ll-sub">${MESSAGES.whitelisted.sub}</span>
             </div>
-            <button class="ll-btn white" id="ll-remove">Remove</button>`;
+            <button class="ll-btn white" id="ll-remove">${MESSAGES.whitelisted.btn}</button>`;
     } else if (localStatus === 'black') {
         banner.className = 'black';
         banner.innerHTML = `
             <div class="ll-text">
-                <span class="ll-title">Blacklisted artist skipped</span>
-                <span class="ll-sub">This artist will always skip</span>
+                <span class="ll-title">${MESSAGES.blacklisted.title}</span>
+                <span class="ll-sub">${MESSAGES.blacklisted.sub}</span>
             </div>
-            <button class="ll-btn black" id="ll-remove">Remove</button>`;
+            <button class="ll-btn black" id="ll-remove">${MESSAGES.blacklisted.btn}</button>`;
     } else if (isVerified && label === 'AI') {
         banner.className = 'white';
         banner.innerHTML = `
             <div class="ll-text">
-                <span class="ll-title">AI artist skipped</span>
-                <span class="ll-sub">Verified AI artist are locked at 100%. Would you like to play their music anyway?</span>
+                <span class="ll-title">${MESSAGES.verifiedAi.title}</span>
+                <span class="ll-sub">${MESSAGES.verifiedAi.sub}</span>
             </div>
-            <button class="ll-btn white" id="ll-whitelist">Whitelist</button>`;
+            <button class="ll-btn white" id="ll-whitelist">${MESSAGES.verifiedAi.btn}</button>`;
     } else if (isVerified && label === 'HUMAN') {
         banner.className = 'black';
         banner.innerHTML = `
             <div class="ll-text">
-                <span class="ll-title">Verified human artist</span>
-                <span class="ll-sub">This artist always plays by default. Want to blacklist and always skip it instead?</span>
+                <span class="ll-title">${MESSAGES.verifiedHuman.title}</span>
+                <span class="ll-sub">${MESSAGES.verifiedHuman.sub}</span>
             </div>
-            <button class="ll-btn black" id="ll-blacklist">Blacklist</button>`;
-    } else if (hasVote) {
+            <button class="ll-btn black" id="ll-blacklist">${MESSAGES.verifiedHuman.btn}</button>`;
+    } else if (hasVote && status.my_current_vote === 'ai') {
+        banner.className = 'black';
+        banner.innerHTML = `
+            <div class="ll-text">
+                <span class="ll-title">${MESSAGES.votedAi.title}</span>
+                <span class="ll-sub">${MESSAGES.votedAi.sub}</span>
+            </div>
+            <button class="ll-btn black" id="ll-blacklist">${MESSAGES.votedAi.btn}</button>`;
+    } else if (hasVote && status.my_current_vote === 'human') {
         banner.className = 'white';
         banner.innerHTML = `
             <div class="ll-text">
-                <span class="ll-title">Would you like to whitelist this artist?</span>
-                <span class="ll-sub">Whitelisting will always play them regardless of score</span>
+                <span class="ll-title">${MESSAGES.votedHuman.title}</span>
+                <span class="ll-sub">${MESSAGES.votedHuman.sub}</span>
             </div>
-            <button class="ll-btn white" id="ll-whitelist">Whitelist</button>`;
+            <button class="ll-btn white" id="ll-whitelist">${MESSAGES.votedHuman.btn}</button>`;
     } else {
         banner.style.display = 'none';
         banner.innerHTML = '';
