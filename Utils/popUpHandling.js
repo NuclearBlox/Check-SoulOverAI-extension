@@ -289,7 +289,7 @@ shadow.appendChild(card);
         document.body.appendChild(host);
 
         // Position after the element is in the DOM so we can measure its height
-        requestAnimationFrame(() => positionPopup(host, badge));
+        // requestAnimationFrame(() => positionPopup(host, badge)); potentionally breaks the popup
 
         host.onmouseenter = () => clearTimeout(hideTimer);
         host.onmouseleave = () => window.hidePopup();
@@ -303,7 +303,7 @@ shadow.appendChild(card);
         if (!document.body.contains(host)) return;
 
         // Re-position after data loads in case content height changed
-        requestAnimationFrame(() => positionPopup(host, badge));
+        // requestAnimationFrame(() => positionPopup(host, badge)); ditto
 
 
         const threshold = thresholdRes.threshold ?? 50;
