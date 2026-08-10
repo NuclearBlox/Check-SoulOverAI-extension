@@ -15,7 +15,7 @@ let hideTimer;
             <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 -960 960 960" fill="#22c55e" style="flex-shrink:0;display:block">
                 <path d="m344-60-76-128-144-32 14-148-98-112 98-112-14-148 144-32 76-128 136 58 136-58 76 128 144 32-14 148 98 112-98 112 14 148-144 32-76 128-136-58-136 58Zm94-278 226-226-56-58-170 170-86-84-56 58 142 140Z"/>
             </svg>
-            <span class="tooltip">A human moderator has reviewed this artist and confirmed the rating — either through a high vote count or a resolved report.</span>
+           <span class="tooltip">A human has manually reviewed this artist and locked their result. If you believe there's a mistake, click Report.</span>
         </span>`;
     const LOCK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="#71717a" style="flex-shrink:0">
         <path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm240-200q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80Z"/>
@@ -62,7 +62,6 @@ function positionPopup(host, badge) {
     const maxTop = window.innerHeight - popH - MARGIN;
     if (top > maxTop) {
         top = Math.max(MARGIN, maxTop);
-        // Clamping may now overlap the badge — push clear of it explicitly
         if (top < rect.bottom + MARGIN && top + popH > rect.top - MARGIN) {
             top = rect.top - popH - MARGIN;
         }
@@ -75,6 +74,27 @@ function positionPopup(host, badge) {
         z-index: 2147483647;
     `;
 }
+
+    function updateThresholdWarning(inputEl) {
+        const val = Number(inputEl.value);
+        const wrapper = inputEl.closest('.skip-input-wrapper');
+
+        if (val > 100) {
+            inputEl.classList.add('is-over-max');
+            inputEl.title = "This effectively disables soundproof";
+            if (wrapper) {
+                wrapper.classList.add('has-tooltip');
+                wrapper.setAttribute('data-tooltip', 'This effectively disables soundproof');
+            }
+        } else {
+            inputEl.classList.remove('is-over-max');
+            inputEl.removeAttribute('title');
+            if (wrapper) {
+                wrapper.classList.remove('has-tooltip');
+                wrapper.removeAttribute('data-tooltip');
+            }
+        }
+    }
 
     window.showPopup = async function(container, badge, human, artist, platformClass) {
         console.log('showPopup called', Date.now(), new Error().stack)
@@ -109,7 +129,7 @@ function positionPopup(host, badge) {
                 color: var(--text); font-family: 'Inter', sans-serif;
                 box-shadow: 0 12px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
                 animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-                position: relative; overflow: hidden;
+                position: relative; overflow: visible;
             }
 
             @keyframes pop { 
@@ -117,7 +137,6 @@ function positionPopup(host, badge) {
                 to   { opacity: 1; transform: translateY(0) scale(1); } 
             }
 
-            /* Glow anchored to top-right corner, clipped by card overflow:hidden */
             .glow-orb {
                 position: absolute; top: -60px; right: -60px;
                 width: 220px; height: 220px; border-radius: 50%;
@@ -126,7 +145,6 @@ function positionPopup(host, badge) {
                 pointer-events: none;
             }
                 
-            /* Everything sits above the glow */
             .top, .meter-bar, .stats, .btns, .footer { position: relative; z-index: 1; }
 
             .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px; }
@@ -172,26 +190,40 @@ function positionPopup(host, badge) {
                 letter-spacing: 0.02em;
             }
 
-            .tooltip-wrap { position: relative; display: flex; align-items: center; cursor: default; }
-            .tooltip {
-                display: none;
+            /* Verified Checkmark Tooltip Styles */
+            .tooltip-wrap { 
+                position: relative; 
+                display: inline-flex; 
+                align-items: center; 
+                cursor: pointer; 
+            }
+            .tooltip-wrap .tooltip {
+                display: block !important;
                 position: absolute;
                 bottom: calc(100% + 8px);
                 left: 50%;
                 transform: translateX(-50%);
                 background: #1c1c1f;
-                border: 1px solid rgba(255,255,255,0.12);
+                border: 1px solid rgba(255, 255, 255, 0.12);
                 color: #d4d4d8;
                 font-size: 11px;
                 font-weight: 400;
-                line-height: 1.5;
+                line-height: 1.4;
                 padding: 8px 10px;
                 border-radius: 8px;
                 width: 200px;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
                 pointer-events: none;
-                z-index: 10;
+                z-index: 99;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.2s ease, visibility 0.2s ease;
             }
+            .tooltip-wrap:hover .tooltip {
+                opacity: 1;
+                visibility: visible;
+            }
+
             .skeleton { animation: pulse 1.2s ease-in-out infinite; background: rgba(255,255,255,0.06); border-radius: 4px; }
             @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
@@ -203,8 +235,38 @@ function positionPopup(host, badge) {
                 width: 32px; background: #18181b; border: 1.5px solid #333; color: var(--human);
                 border-radius: 6px; text-align: left; font-family: 'Saira Extra Condensed', sans-serif;
                 font-size: 16px; font-weight: 700; padding: 3px 18px 3px 6px;
-                appearance: textfield; transition: border-color 0.2s;
+                appearance: textfield; transition: border-color 0.2s, color 0.2s;
             }
+            
+            .skip-in.is-over-max {
+                color: #ef4444 !important;
+                border-color: #ef4444 !important;
+            }
+
+            .skip-input-wrapper[data-tooltip]::after {
+                content: attr(data-tooltip);
+                position: absolute;
+                bottom: calc(100% + 6px);
+                left: 50%;
+                transform: translateX(-50%);
+                background: #1c1c1f;
+                border: 1px solid rgba(239, 68, 68, 0.4);
+                color: #fca5a5;
+                font-size: 10px;
+                font-weight: 600;
+                white-space: nowrap;
+                padding: 4px 8px;
+                border-radius: 6px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.2s ease;
+                z-index: 20;
+            }
+            .skip-input-wrapper.has-tooltip:hover::after {
+                opacity: 1;
+            }
+
             .min-in {
                 width: 24px; background: #18181b; border: 1.5px solid #333; color: var(--human);
                 border-radius: 6px; text-align: left; font-family: 'Saira Extra Condensed', sans-serif;
@@ -214,8 +276,8 @@ function positionPopup(host, badge) {
             .skip-in::-webkit-outer-spin-button,
             .skip-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
             .skip-in:focus { outline: none; border-color: var(--human); }
-                        .min-in::-webkit-outer-spin-button,
-            .min-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } /* im FAR too lazy to do it all fancy */
+            .min-in::-webkit-outer-spin-button,
+            .min-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
             .min-in:focus { outline: none; border-color: var(--human); }
             .pct-symbol { position: absolute; right: 6px; font-size: 9px; color: var(--dim); pointer-events: none; }
             .ai-label { color: var(--dim); font-weight: 700; text-transform: uppercase; font-size: 9px; letter-spacing: 0.05em; }
@@ -256,55 +318,46 @@ function positionPopup(host, badge) {
             </div>
             <div class="footer">
                 <div class="skip">
-    Skip past
+                    Skip past
+                    <div class="skip-input-wrapper">
+                        <input type="number" id="skip-in" class="skip-in" value="50">
+                        <span class="pct-symbol">%</span>
+                    </div>
+                    <span class="ai-label">AI</span>
 
-    <div class="skip-input-wrapper">
-        <input type="number" id="skip-in" class="skip-in" value="50">
-        <span class="pct-symbol">%</span>
-    </div>
-    <span class="ai-label">AI</span>
+                    <span style="margin-left:6px;">with</span>
 
-    <span style="margin-left:6px;">with</span>
-
-    <div class="min-votes-wrapper">
-        <input type="number" id="min-in" class="min-in" value="3">
-    </div>
-    <span class="ai-label">votes</span>
-</div>
+                    <div class="min-votes-wrapper">
+                        <input type="number" id="min-in" class="min-in" value="3">
+                    </div>
+                    <span class="ai-label">votes</span>
+                </div>
                 <a href="https://github.com/NuclearBlox/Check-SoulOverAI-extension/wiki/Appealing-an-incorrect-rating" target="_blank" class="appeal">
                     <span>Report</span><span class="full">Mistake?</span>
                 </a>
             </div>
         `;
 
-        // Set initial off-screen position to avoid flash, then append
         host.style.cssText = 'position: fixed; left: -9999px; top: -9999px; z-index: 2147483647;';
         const bannerHost = document.createElement('div');
-bannerHost.id = 'locallist-banner';
-bannerHost.style.display = 'none';
+        bannerHost.id = 'locallist-banner';
+        bannerHost.style.display = 'none';
 
-shadow.appendChild(style);
-shadow.appendChild(bannerHost);
-shadow.appendChild(card);
+        shadow.appendChild(style);
+        shadow.appendChild(bannerHost);
+        shadow.appendChild(card);
         document.body.appendChild(host);
-
-        // Position after the element is in the DOM so we can measure its height
-        // requestAnimationFrame(() => positionPopup(host, badge)); potentionally breaks the popup
 
         host.onmouseenter = () => clearTimeout(hideTimer);
         host.onmouseleave = () => window.hidePopup();
 
-       const [status, thresholdRes, minVotesRes] = await Promise.all([
-    getArtistStatus(artist, platformClass, true), // Force refresh to get the latest data
-    chrome.storage.local.get('threshold'),
-    chrome.storage.local.get('minVotes')
-]);
+        const [status, thresholdRes, minVotesRes] = await Promise.all([
+            getArtistStatus(artist, platformClass, true),
+            chrome.storage.local.get('threshold'),
+            chrome.storage.local.get('minVotes')
+        ]);
 
         if (!document.body.contains(host)) return;
-
-        // Re-position after data loads in case content height changed
-        // requestAnimationFrame(() => positionPopup(host, badge)); ditto
-
 
         const threshold = thresholdRes.threshold ?? 50;
         const minVotes = minVotesRes.minVotes ?? 3;
@@ -323,7 +376,6 @@ shadow.appendChild(card);
 
         const themeColor = getVerdictColor(label, displayPct);
 
-        // Badge AFTER the name
         shadow.querySelector('.name').innerHTML =
             `<span>${artist}</span>` + (status.out_verified ? VERIFIED_ICON : '');
 
@@ -357,14 +409,24 @@ shadow.appendChild(card);
             vA.onclick = () => castVote(artist, 'ai', badge, platformClass);
         }
 
-        shadow.querySelector('#skip-in').value = threshold;
+        const skipInput = shadow.querySelector('#skip-in');
+        skipInput.value = threshold;
+        updateThresholdWarning(skipInput);
+
         shadow.querySelector('#min-in').value = minVotes;
         await renderLocalListBanner(shadow, artist, platformClass, status, badge, label);
         requestAnimationFrame(() => positionPopup(host, badge));
-        shadow.querySelector('#skip-in').onchange = (e) =>
-            chrome.storage.local.set({ threshold: e.target.value });
 
-         shadow.querySelector('#min-in').onchange = (e) =>
+        skipInput.oninput = (e) => {
+            updateThresholdWarning(e.target);
+        };
+
+        skipInput.onchange = (e) => {
+            updateThresholdWarning(e.target);
+            chrome.storage.local.set({ threshold: e.target.value });
+        };
+
+        shadow.querySelector('#min-in').onchange = (e) =>
             chrome.storage.local.set({ minVotes: e.target.value });
     };
 

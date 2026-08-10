@@ -11,7 +11,7 @@ const MESSAGES = { // Got a bit sick of digging through HTML to change these
     },
     verifiedAi: {
         title: "Verified AI artist",
-        sub: "Locked at 100%. Play anyway?",
+        sub: "Locked at 100%. Play anyway? (report mistakes!)",
         btn: "Whitelist"
     },
     verifiedHuman: {
