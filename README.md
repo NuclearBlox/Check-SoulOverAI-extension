@@ -6,7 +6,7 @@
 # Update on the horizon! SoundProof V6
 SoundProof is now testing V6! Adding local black and white listing of artists along with caching to save on API calls
 
-Possibly in 6 or 6.1: Direct menu for managing black/whitelisted artists
+Possibly in 6.1: Direct menu for managing black/whitelisted artists
 
 > [!IMPORTANT]
 > If you are here because you are an artist/fan who feels unfairly blocked, you're in luck! [appeal here!](https://github.com/NuclearBlox/SoundProof-extension/wiki/Appealing-an-incorrect-rating)
