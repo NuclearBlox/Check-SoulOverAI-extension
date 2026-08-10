@@ -1,33 +1,32 @@
-
 const MESSAGES = { // Got a bit sick of digging through HTML to change these
     whitelisted: {
-        title: "You whitelisted this artist",
-        sub: "Their music will always play regardless of score",
+        title: "Artist whitelisted",
+        sub: "Always plays, regardless of score",
         btn: "Remove"
     },
     blacklisted: {
         title: "Artist blacklisted",
-        sub: "This artist is locked at 100% and skipped regardless of score",
+        sub: "Locked at 100%, always skipped",
         btn: "Remove"
     },
     verifiedAi: {
-        title: "Verfied AI artist",
-        sub: "Verified AI artist are locked at 100%. Would you like to play their music anyway?",
+        title: "Verified AI artist",
+        sub: "Locked at 100%. Play anyway?",
         btn: "Whitelist"
     },
     verifiedHuman: {
         title: "Verified human artist",
-        sub: "This artist always plays. Would you like to blacklist them anyway? (report mistakes!)",
+        sub: "Always plays. Blacklist anyway? (report mistakes!)",
         btn: "Blacklist"
     },
     votedAi: {
         title: "Blacklist too?",
-        sub: "Blacklisting will set them to 100% and skip their music regardless of score",
+        sub: "Locks them at 100%, always skipped",
         btn: "Blacklist"
     },
     votedHuman: {
-        title: "Would you like to whitelist this artist?",
-        sub: "Whitelisting will always play them regardless of score",
+        title: "Whitelist too?",
+        sub: "Always plays, regardless of score",
         btn: "Whitelist"
     }
 };
@@ -79,10 +78,12 @@ async function getLocalStatus(artist, platformClass) {
 
 const LOCAL_LIST_STYLES = `
     #locallist-banner {
+        position: relative; /* Container for absolute positioned glow background */
+        overflow: hidden;   /* Keeps radial orb contained inside the banner */
         width: 398px;
-        padding: 12px 14px;
+        padding: 12px 10px;
         border-radius: 12px;
-        margin-bottom: 12px;
+        margin-bottom: 4px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -94,6 +95,37 @@ const LOCAL_LIST_STYLES = `
         border: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
         box-sizing: border-box;
+    }
+
+    /* Pseudo-element creating the matching glowing orb */
+    #locallist-banner::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%; /* Centers the orb near the action button */
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.5; /* Adjust intensity of glow */
+        transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    /* Ensure text and buttons layer above the background glow */
+    .ll-text, .ll-btn {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Orb color matching 'white' (human) state */
+    #locallist-banner.white::before {
+        background: radial-gradient(circle, var(--human) 0%, transparent 70%);
+    }
+
+    /* Orb color matching 'black' (AI) state */
+    #locallist-banner.black::before {
+        background: radial-gradient(circle, var(--ai) 0%, transparent 70%);
     }
 
     .ll-text { 
@@ -133,7 +165,8 @@ const LOCAL_LIST_STYLES = `
         box-sizing: border-box;
     }
 
-    /* Solid state matching .btn-h / .btn-a */
+    /* Solid state matching .btn-h / .btn-a — used for suggested actions
+       (verifiedAi/verifiedHuman/votedAi/votedHuman) that haven't been taken yet */
     .ll-btn.white { 
         background: var(--human); 
         color: #052e16; 
@@ -153,6 +186,43 @@ const LOCAL_LIST_STYLES = `
     .ll-btn.black:hover { 
         background: transparent !important; 
         color: var(--ai); 
+    }
+
+    /* Main UI's buttons grow via flex when a sibling shrinks away from it
+       (.btns:hover .btn:not(:hover) / .btns .btn:hover). The banner only
+       ever shows one button, so there's no sibling to shrink — scale up
+       directly instead to give the same "reaching toward you" feedback. */
+    .ll-btn:hover {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    .ll-btn:active {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    /* Toggled state — for buttons that represent an already-active choice
+       (mirrors .voted-h / .voted-a from the main popup). Outlined by
+       default, fills solid on hover to signal "click to undo". Used for
+       the whitelisted/blacklisted "Remove" button. Higher specificity
+       than .ll-btn.white/.black so it overrides the solid default. */
+    .ll-btn.white.toggled {
+        background: transparent;
+        color: var(--human);
+        border-color: var(--human);
+    }
+    .ll-btn.black.toggled {
+        background: transparent;
+        color: var(--ai);
+        border-color: var(--ai);
+    }
+    .ll-btn.white.toggled:hover {
+        background: var(--human) !important;
+        color: #052e16;
+    }
+    .ll-btn.black.toggled:hover {
+        background: var(--ai) !important;
+        color: #450a0a;
     }
 `;
 
@@ -188,7 +258,7 @@ async function renderLocalListBanner(shadow, artist, platformClass, status, badg
                 <span class="ll-title">${MESSAGES.whitelisted.title}</span>
                 <span class="ll-sub">${MESSAGES.whitelisted.sub}</span>
             </div>
-            <button class="ll-btn white" id="ll-remove">${MESSAGES.whitelisted.btn}</button>`;
+            <button class="ll-btn white toggled" id="ll-remove">${MESSAGES.whitelisted.btn}</button>`;
     } else if (localStatus === 'black') {
         banner.className = 'black';
         banner.innerHTML = `
@@ -196,7 +266,7 @@ async function renderLocalListBanner(shadow, artist, platformClass, status, badg
                 <span class="ll-title">${MESSAGES.blacklisted.title}</span>
                 <span class="ll-sub">${MESSAGES.blacklisted.sub}</span>
             </div>
-            <button class="ll-btn black" id="ll-remove">${MESSAGES.blacklisted.btn}</button>`;
+            <button class="ll-btn black toggled" id="ll-remove">${MESSAGES.blacklisted.btn}</button>`;
     } else if (isVerified && label === 'AI') {
         banner.className = 'white';
         banner.innerHTML = `
