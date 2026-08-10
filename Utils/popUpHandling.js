@@ -15,7 +15,7 @@ let hideTimer;
             <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 -960 960 960" fill="#22c55e" style="flex-shrink:0;display:block">
                 <path d="m344-60-76-128-144-32 14-148-98-112 98-112-14-148 144-32 76-128 136 58 136-58 76 128 144 32-14 148 98 112-98 112 14 148-144 32-76 128-136-58-136 58Zm94-278 226-226-56-58-170 170-86-84-56 58 142 140Z"/>
             </svg>
-           <span class="tooltip">A human has manually reviewed this artist and locked their result. If you believe there's a mistake, click Report.</span>
+            <span class="tooltip">A human moderator has reviewed this artist and confirmed the rating — either through a high vote count or a resolved report.</span>
         </span>`;
     const LOCK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="#71717a" style="flex-shrink:0">
         <path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm240-200q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80Z"/>
@@ -129,7 +129,7 @@ function positionPopup(host, badge) {
                 color: var(--text); font-family: 'Inter', sans-serif;
                 box-shadow: 0 12px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
                 animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-                position: relative; overflow: visible;
+                position: relative; overflow: hidden;
             }
 
             @keyframes pop { 
@@ -190,40 +190,13 @@ function positionPopup(host, badge) {
                 letter-spacing: 0.02em;
             }
 
-            /* Verified Checkmark Tooltip Styles */
-            .tooltip-wrap { 
-                position: relative; 
-                display: inline-flex; 
-                align-items: center; 
-                cursor: pointer; 
+            .tooltip-wrap { position: relative; display: flex; align-items: center; cursor: default; }
+            .tooltip {
+                display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+                background: #1c1c1f; border: 1px solid rgba(255,255,255,0.12); color: #d4d4d8; font-size: 11px;
+                font-weight: 400; line-height: 1.5; padding: 8px 10px; border-radius: 8px; width: 200px;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.5); pointer-events: none; z-index: 10;
             }
-            .tooltip-wrap .tooltip {
-                display: block !important;
-                position: absolute;
-                bottom: calc(100% + 8px);
-                left: 50%;
-                transform: translateX(-50%);
-                background: #1c1c1f;
-                border: 1px solid rgba(255, 255, 255, 0.12);
-                color: #d4d4d8;
-                font-size: 11px;
-                font-weight: 400;
-                line-height: 1.4;
-                padding: 8px 10px;
-                border-radius: 8px;
-                width: 200px;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-                pointer-events: none;
-                z-index: 99;
-                opacity: 0;
-                visibility: hidden;
-                transition: opacity 0.2s ease, visibility 0.2s ease;
-            }
-            .tooltip-wrap:hover .tooltip {
-                opacity: 1;
-                visibility: visible;
-            }
-
             .skeleton { animation: pulse 1.2s ease-in-out infinite; background: rgba(255,255,255,0.06); border-radius: 4px; }
             @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
@@ -238,11 +211,13 @@ function positionPopup(host, badge) {
                 appearance: textfield; transition: border-color 0.2s, color 0.2s;
             }
             
+            /* Red threshold override styles */
             .skip-in.is-over-max {
                 color: #ef4444 !important;
                 border-color: #ef4444 !important;
             }
 
+            /* Tooltip styling for threshold warning */
             .skip-input-wrapper[data-tooltip]::after {
                 content: attr(data-tooltip);
                 position: absolute;

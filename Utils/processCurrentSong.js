@@ -15,34 +15,38 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
     const isAI = status.out_ai > status.out_human;
     const winningSideVotes = isAI ? status.out_ai : status.out_human;
     const confidencePct = Math.round((winningSideVotes / total) * 100);
-    let tugPct = Math.round((Math.abs(status.out_ai - status.out_human) / total) * 100);
+    const tugPct = Math.round((Math.abs(status.out_ai - status.out_human) / total) * 100);
     const isLean = confidencePct < 75 || total <= 5;
     const isVerified = status.out_verified;
 
-    if (isAI) {
-        console.log(`[SoundProof] ${artistName} is AI (${status.out_ai} AI vs ${status.out_human} Human, ${confidencePct}% confidence, ${tugPct}% tug)`);
-        const badge = ShowWarningBadge(AIwidth, badgeLocation, artistName, padding, true, isLean, isVerified, platformClass);
+    console.log(`[SoundProof] ${artistName} is ${isAI ? 'AI' : 'Human'} (${status.out_ai} AI vs ${status.out_human} Human, ${confidencePct}% confidence, ${tugPct}% tug)`);
 
-        if (skipElement) {
-            const localStatus = await getLocalStatus(artistName, platformClass);
-            if (localStatus === 'black') {
-                tugPct = 100;
-            } else if (localStatus === 'white') {
-                tugPct = 0;
-            }
+    const badge = isAI
+        ? ShowWarningBadge(AIwidth, badgeLocation, artistName, padding, true, isLean, isVerified, platformClass)
+        : ShowHumanBadge(humanWidth, badgeLocation, artistName, padding, true, isLean, isVerified, platformClass);
 
-            const { minVotes } = await chrome.storage.local.get('minVotes');
-            if (localStatus || total >= (minVotes ?? 3)) {
-                let { threshold } = await chrome.storage.local.get('threshold');
-                threshold = Number(threshold ?? 50);
-                if (tugPct >= threshold) {
-                    console.log(`[SoundProof] Skipping ${artistName} — ${tugPct}% AI pull, threshold ${threshold || 50}%`);
-                    skipElement.click();
-                }
+    if (skipElement) {
+        const localStatus = await getLocalStatus(artistName, platformClass);
+
+        // Local override forces the effective AI-pull used for the skip decision,
+        // independent of which badge the vote data produced above.
+        let effectiveTug = tugPct;
+        if (localStatus === 'black') {
+            effectiveTug = 100;
+        } else if (localStatus === 'white') {
+            effectiveTug = 0;
+        }
+
+        const { minVotes } = await chrome.storage.local.get('minVotes');
+        if (localStatus || total >= (minVotes ?? 3)) {
+            let { threshold } = await chrome.storage.local.get('threshold');
+            threshold = Number(threshold ?? 50);
+            if (effectiveTug >= threshold) {
+                console.log(`[SoundProof] Skipping ${artistName} — ${effectiveTug}% AI pull, threshold ${threshold || 50}%`);
+                skipElement.click();
             }
         }
-        return badge;
-    } else {
-        return ShowHumanBadge(humanWidth, badgeLocation, artistName, padding, true, isLean, isVerified, platformClass);
     }
+
+    return badge;
 };
