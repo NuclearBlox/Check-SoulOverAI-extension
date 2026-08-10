@@ -27,8 +27,8 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
             if (total >= (minVotes ?? 3) && skipElement) {
                 let { threshold } = await chrome.storage.local.get('threshold');
                 threshold = Number(threshold ?? 50);
-                console.log('[SoundProof] read threshold =', threshold); // debugging time
-                if (tugPct >= (threshold ?? 50)) {
+                console.log(`[SoundProof] tugPct = ${tugPct}, threshold = ${threshold}`);
+                if (tugPct >= (threshold)) {
                     console.log(`[SoundProof] Skipping ${artistName} — ${tugPct}% AI pull, threshold ${threshold || 50}%`);
                     skipElement.click();
                 }
