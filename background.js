@@ -16,3 +16,4 @@ fetch("https://raw.githubusercontent.com/xoundbyte/soul-over-ai/main/dist/artist
     }
   });
   */
+// old logic from simpler times

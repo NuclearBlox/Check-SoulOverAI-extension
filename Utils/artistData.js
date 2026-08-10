@@ -28,11 +28,11 @@ function getTimeValid(status) {
     if (status.out_verified === true) {
         return 20 * 24 * 60 * 60 * 1000; // 20 days
     } else if (margin >= 10) {
-        return 10 * 24 * 60 * 60 * 1000; // 10 days — decisive
+        return 5 * 24 * 60 * 60 * 1000; // 5 days — decisive
     } else if (margin >= 3) {
-        return 3 * 24 * 60 * 60 * 1000; // 3 days
+        return 1 * 24 * 60 * 60 * 1000; // 1 day
     } else if (margin >= 1) {
-        return 1 * 24 * 60 * 60 * 1000; // 1 day — could flip on the next vote
+        return 3 * 60 * 60 * 1000; // 3 hours — could flip on the next vote
     }
     return 0; // tied or no votes — don't cache
 }

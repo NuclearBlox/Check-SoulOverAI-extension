@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Detect & Skip AI Music - SoundProof",
-  "version": "5.4.0",
+  "version": "6.0.0",
   "permissions": ["storage"],
   "host_permissions": ["https://solsneywdlhvwbtghopw.supabase.co/*"],
   "icons": {
@@ -15,6 +15,7 @@
       "js": [
         "libs/supabase.js",
         "Utils/Badge.js",
+        "Utils/localList.js",
         "Utils/popUpHandling.js",
         "Utils/artistData.js",
         "Utils/processCurrentSong.js",
@@ -27,6 +28,7 @@
       "js": [
         "libs/supabase.js",
         "Utils/Badge.js",
+        "Utils/localList.js",
         "Utils/popUpHandling.js",
         "Utils/artistData.js",
         "Utils/processCurrentSong.js",
@@ -39,6 +41,7 @@
       "js": [
         "libs/supabase.js",
         "Utils/Badge.js",
+        "Utils/localList.js",
         "Utils/popUpHandling.js",
         "Utils/artistData.js",
         "Utils/processCurrentSong.js",
@@ -51,6 +54,7 @@
       "js": [
         "libs/supabase.js",
         "Utils/Badge.js",
+        "Utils/localList.js",
         "Utils/popUpHandling.js",
         "Utils/artistData.js",
         "Utils/processCurrentSong.js",
@@ -63,6 +67,7 @@
       "js": [
         "libs/supabase.js",
         "Utils/Badge.js",
+        "Utils/localList.js",
         "Utils/popUpHandling.js",
         "Utils/artistData.js",
         "Utils/processCurrentSong.js",
