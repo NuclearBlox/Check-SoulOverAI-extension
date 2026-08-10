@@ -21,11 +21,13 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
         const isVerified = status.out_verified;
 
         if (isAI) {
+            console.log(`[SoundProof] ${artistName} is AI (${status.out_ai} AI vs ${status.out_human} Human, ${confidencePct}% confidence, ${tugPct}% tug)`);
             const badge = ShowWarningBadge(AIwidth, badgeLocation, artistName, padding, true, isLean, isVerified, platformClass);
             const { minVotes } = await chrome.storage.local.get('minVotes');
             if (total >= (minVotes ?? 3) && skipElement) {
-                const { threshold } = await chrome.storage.local.get('threshold');
+                let { threshold } = await chrome.storage.local.get('threshold');
                 threshold = Number(threshold ?? 50);
+                console.log('[SoundProof] read threshold =', threshold); // debugging time
                 if (tugPct >= (threshold ?? 50)) {
                     console.log(`[SoundProof] Skipping ${artistName} — ${tugPct}% AI pull, threshold ${threshold || 50}%`);
                     skipElement.click();
