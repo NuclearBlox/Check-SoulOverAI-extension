@@ -30,40 +30,7 @@ function waitForElement(selector, timeout) {
                 reject(new Error(`Timeout of ${timeout} occured for waiting for ${selector}`))
             }, timeout);
         }
-    })
-}
-
-function updatePage() {
-    console.log("Updated!")
-}
-
-let lastName = ""
-
-function waitForElement(selector, timeout) {
-    return new Promise((resolve, reject) => {
-        const element = document.querySelector(selector)
-        if (element) return resolve(element);
-
-        const observer = new MutationObserver(() => {
-            const element = document.querySelector(selector)
-            if (element) {
-                observer.disconnect()
-                resolve(element)
-            }
-        })
-
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        })
-
-        if (Number.isFinite(timeout)) {
-            setTimeout(() => {
-                observer.disconnect()
-                reject(new Error(`Timeout of ${timeout} occured for waiting for ${selector}`))
-            }, timeout);
-        }
-    })
+    });
 }
 
 function waitForElementRemoved(selector) {
@@ -135,12 +102,11 @@ function clamp(value, min, max) {
 }
 
 function getAppleMusicControlHeight(actionButtons) {
-    const button = actionButtons?.querySelector('button') || actionButtons.firstElementChild;
-    return button.offsetHeight || 28;
+    const button = actionButtons?.querySelector('button') || actionButtons?.firstElementChild;
+    return button?.offsetHeight || 28;
 }
 
 function getAppleMusicBadgeWidths(actionButtons) {
-    const button = actionButtons?.querySelector('button') || actionButtons?.firstElementChild;
     const buttonHeight = getAppleMusicControlHeight(actionButtons);
     const badgeHeight = clamp(Math.round(buttonHeight * 0.72), 18, 24);
 
@@ -149,8 +115,11 @@ function getAppleMusicBadgeWidths(actionButtons) {
         human: Math.round(badgeHeight * 3.0) + 'px'
     };
 }
+
 function alignAppleMusicBadge(badge, actionButtons) {
-    const badgeContainer = badge.parentElement;
+    const badgeContainer = badge?.parentElement;
+    if (!badgeContainer) return;
+
     const controlHeight = getAppleMusicControlHeight(actionButtons);
     const badgeHeight = clamp(Math.round(controlHeight * 0.72), 18, 24);
 
@@ -227,10 +196,8 @@ async function injectMiniplayerDisplay() {
             align-items: center;
             gap: 10px;
             border: 1px solid rgba(0, 0, 0, 0.12);
-            backdrop-filter: saturate(220%) blur(16px);
             background: var(--glassMaterialBackground);
             border-radius: 1000px;
-            box-shadow: 0 10px 40px var(--glassMaterialShadowColor);
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
             backdrop-filter: blur(18px);
             -webkit-backdrop-filter: blur(18px);
@@ -244,61 +211,85 @@ async function injectMiniplayerDisplay() {
     }
 }
 
+let lastName = "";
 let nameChangeOverrideCheck = false
 let artworkBadgeInjecting = false
+
+function requestRecheck() {
+    nameChangeOverrideCheck = true;
+}
+
+function requestRecheckWhenRemoved(selector) {
+    waitForElementRemoved(selector).then(requestRecheck);
+}
 
 async function beginLyricsPingPong() {
     while (true) {
         await waitForElement('.mobile-lyrics');
-        nameChangeOverrideCheck = true
+        requestRecheck()
         await waitForElementRemoved('.mobile-lyrics');
-        nameChangeOverrideCheck = true
+        requestRecheck()
     }
 }
 
 async function injectArtworkBadge() {
-    const nextButton = Array.from(document.querySelectorAll("amp-playback-controls-item-skip")).at(-1);
-    const miniplayer = document.querySelector('div[data-testid="mini-player-container"]')
-    if (miniplayer) {
-        let artworkContainer = document.querySelector('.artwork-container')
-        if (!artworkContainer) {
-            artworkContainer = await waitForElement('.artwork-container');
+    if (artworkBadgeInjecting) return;
+    artworkBadgeInjecting = true
+
+    try {
+        const nextButton = Array.from(document.querySelectorAll("amp-playback-controls-item-skip")).at(-1);
+        const miniplayer = document.querySelector('div[data-testid="mini-player-container"]')
+        if (miniplayer) {
+            let artworkContainer = document.querySelector('.artwork-container')
+            if (!artworkContainer) {
+                artworkContainer = await waitForElement('.artwork-container');
+            }
+            const badgeWidths = getAppleMusicBadgeWidths(miniplayer)
+            const badge = await DecideBadge(badgeWidths.ai, badgeWidths.human, 'div.mini-player__text--subtitle .mini-player__clamp-wrapper', artworkContainer, nextButton, '0px', 'music')
+            alignArtworkMenuBadge(badge)
+            requestRecheckWhenRemoved('.artwork-container');
+        } else {
+            let accessoryButtons = document.querySelector('.accessory-buttons')
+            if (!accessoryButtons) {
+                accessoryButtons = await waitForElement('.accessory-buttons');
+            }
+            const badgeWidths = getAppleMusicBadgeWidths(accessoryButtons)
+            const badge = await DecideBadge(badgeWidths.ai, badgeWidths.human, 'span.marquee-line__fragment:first-child button.lcd-meta-line__fragment', accessoryButtons, nextButton, '0px', 'music')
+            alignArtworkMenuBadge(badge)
+            requestRecheckWhenRemoved('.accessory-buttons');
         }
-        const badgeWidths = getAppleMusicBadgeWidths(miniplayer)
-        const badge = await DecideBadge(badgeWidths.ai, badgeWidths.human, 'div.mini-player__text--subtitle .mini-player__clamp-wrapper', artworkContainer, nextButton, '0px', 'music')
-        alignArtworkMenuBadge(badge)
-        await waitForElementRemoved('.artwork-container');
-        nameChangeOverrideCheck = true
-    } else {
-        let accessoryButtons = document.querySelector('.accessory-buttons')
-        if (!accessoryButtons) {
-            accessoryButtons = await waitForElement('.accessory-buttons');
-        }
-        const badgeWidths = getAppleMusicBadgeWidths(accessoryButtons)
-        const badge = await DecideBadge(badgeWidths.ai, badgeWidths.human, 'span.marquee-line__fragment:first-child button.lcd-meta-line__fragment', accessoryButtons, nextButton, '0px', 'music')
-        alignArtworkMenuBadge(badge)
-        await waitForElementRemoved('.accessory-buttons');
-        nameChangeOverrideCheck = true
+    } catch (err) {
+        console.warn('[SoundProof] Could not inject badge:', err);
+        requestRecheck()
+    } finally {
+        artworkBadgeInjecting = false
     }
 }
 
 async function init() {
     let currentUrl = location.href
     let miniplayerShowing = false
+    let resizeTimer;
+
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(requestRecheck, 150);
+    });
 
     setInterval(async () => {
-        if (currentUrl != location.href) {
+        if (currentUrl !== location.href) {
             currentUrl = location.href
-            updatePage()
+            requestRecheck()
         }
-        const miniplayer = document.querySelector('div[data-testid="mini-player-container"]')
-        if (miniplayer != null && miniplayerShowing == false) {
+
+        const miniplayer = document.querySelector('div[data-testid="mini-player-container"]');
+        if (miniplayer && !miniplayerShowing) {
             await injectMiniplayerDisplay()
-            miniplayerShowing = true
-            nameChangeOverrideCheck = true
-        } else if (miniplayer == null && miniplayerShowing == true) {
-            miniplayerShowing = false
-            nameChangeOverrideCheck = true
+            miniplayerShowing = true;
+            requestRecheck()
+        } else if (!miniplayer && miniplayerShowing) {
+            miniplayerShowing = false;
+            requestRecheck()
         }
 
         const namesLarge = document.querySelectorAll("span.marquee-line__fragment:first-child button.lcd-meta-line__fragment")
@@ -308,27 +299,24 @@ async function init() {
 
         for (let index = 0; index < combinedNames.length; index++) {
             const element = combinedNames[index];
-            if (element.innerHTML != lastName || nameChangeOverrideCheck == true) {
+            if (element.innerHTML !== lastName || nameChangeOverrideCheck) {
                 nameChangeOverrideCheck = false
                 lastName = element.innerHTML
 
                 if (miniplayer) {
-                    const artworkContainer = document.querySelector('.artwork-container')
-                    if (artworkContainer == null) {
-                        const nextButton = Array.from(document.querySelectorAll("amp-playback-controls-item-skip")).at(-1);
-                        const badgeLocation = document.querySelector('.soundproof-mini-player-display')
-                        if (!badgeLocation) {
-                            nameChangeOverrideCheck = true
-                            return
-                        }
-                        const badgeWidths = getAppleMusicBadgeWidths(miniplayer)
-                        const badge = await DecideBadge(badgeWidths.ai, badgeWidths.human, 'div.mini-player__text--subtitle .mini-player__clamp-wrapper', badgeLocation, nextButton, '0px', 'music')
-                        await alignMiniplayerBadge(badge, badgeLocation)
+                    const nextButton = Array.from(document.querySelectorAll("amp-playback-controls-item-skip")).at(-1);
+                    const badgeLocation = document.querySelector('.soundproof-mini-player-display')
+                    if (!badgeLocation) {
+                        requestRecheck()
+                        return
                     }
+                    const badgeWidths = getAppleMusicBadgeWidths(miniplayer)
+                    const badge = await DecideBadge(badgeWidths.ai, badgeWidths.human, 'div.mini-player__text--subtitle .mini-player__clamp-wrapper', badgeLocation, nextButton, '0px', 'music')
+                    await alignMiniplayerBadge(badge, badgeLocation)
                     injectArtworkBadge()
                 } else {
                     const accessoryButtons = document.querySelector('.accessory-buttons')
-                    if (accessoryButtons == null) {
+                    if (!accessoryButtons) {
                         const actionButtons = document.querySelector(".action-buttons")
                         const nextButton = Array.from(document.querySelectorAll("amp-playback-controls-item-skip")).at(-1);
                         if (!actionButtons) return;
@@ -346,7 +334,8 @@ async function init() {
             }
         }
     }, 200);
-    updatePage()
+
+    requestRecheck()
     beginLyricsPingPong()
 }
 

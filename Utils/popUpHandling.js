@@ -97,7 +97,6 @@ function positionPopup(host, badge) {
     }
 
     window.showPopup = async function(container, badge, human, artist, platformClass) {
-        console.log('showPopup called', Date.now(), new Error().stack)
         clearTimeout(hideTimer);
         const existingHost = document.body.querySelector('.ai-guard-wrapper');
         if (existingHost) existingHost.remove();
@@ -389,7 +388,9 @@ function positionPopup(host, badge) {
         updateThresholdWarning(skipInput);
 
         shadow.querySelector('#min-in').value = minVotes;
-        await renderLocalListBanner(shadow, artist, platformClass, status, badge, label);
+        if (typeof window.renderLocalListBanner === 'function') {
+            await window.renderLocalListBanner(shadow, artist, platformClass, status, badge, label);
+        }
         requestAnimationFrame(() => positionPopup(host, badge));
 
         skipInput.oninput = (e) => {
