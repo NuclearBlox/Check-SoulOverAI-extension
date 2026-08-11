@@ -6,6 +6,17 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
     const artistName = (artistElement.dataset.soundproofId || artistElement.textContent.trim()).toLowerCase();
 
     const status = await getArtistStatus(artistName, platformClass, false);
+
+    if (status.out_verified) {
+        if (status.out_ai > status.out_human) {
+            status.out_ai = 10000000;
+            console.log(`[SoundProof] ${artistName} is verified AI. Setting out_ai to 10,000,000.`);
+        } else {
+            status.out_human = 10000000;
+            console.log(`[SoundProof] ${artistName} is verified Human. Setting out_human to 10,000,000.`);
+        }
+    }
+
     const total = status.out_human + status.out_ai;
 
     if (total === 0) {
@@ -28,8 +39,6 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
     if (skipElement) {
         const localStatus = await getLocalStatus(artistName, platformClass);
 
-        // Local override forces the effective AI-pull used for the skip decision,
-        // independent of which badge the vote data produced above.
         let effectiveTug = tugPct;
         if (localStatus === 'black') {
             effectiveTug = 100;
@@ -41,7 +50,7 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
         if (localStatus || total >= (minVotes ?? 3)) {
             let { threshold } = await chrome.storage.local.get('threshold');
             threshold = Number(threshold ?? 50);
-            if (effectiveTug >= threshold) {
+            if (isAI && effectiveTug >= threshold) {
                 console.log(`[SoundProof] Skipping ${artistName} — ${effectiveTug}% AI pull, threshold ${threshold || 50}%`);
                 skipElement.click();
             }
