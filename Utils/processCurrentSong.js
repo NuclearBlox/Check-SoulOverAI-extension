@@ -23,7 +23,7 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
         return ShowNoDataBadge(humanWidth, badgeLocation, artistName, padding, true, platformClass);
     }
 
-    const isAI = status.out_ai > status.out_human;
+    let isAI = status.out_ai > status.out_human;
     const winningSideVotes = isAI ? status.out_ai : status.out_human;
     const confidencePct = Math.round((winningSideVotes / total) * 100);
     const tugPct = Math.round((Math.abs(status.out_ai - status.out_human) / total) * 100);
@@ -42,6 +42,7 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
         let effectiveTug = tugPct;
         if (localStatus === 'black') {
             effectiveTug = 100;
+            isAI = true;
         } else if (localStatus === 'white') {
             effectiveTug = 0;
         }
