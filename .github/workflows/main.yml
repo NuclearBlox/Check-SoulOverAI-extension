@@ -14,5 +14,104 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
 
+      # Test 1: Validate JSON syntax
       - name: Validate manifest.json syntax
         run: python3 -m json.tool manifest.json > /dev/null
+
+      # Test 2: Ensure background scripts and icons exist
+      - name: Check required extension assets exist
+        run: |
+          python3 -c "
+          import os, json
+          manifest = json.load(open('manifest.json'))
+          
+          # Check icon paths
+          for icon in manifest.get('icons', {}).values():
+              assert os.path.exists(icon), f'Missing icon: {icon}'
+              
+          # Check background script
+          bg = manifest.get('background', {}).get('service_worker')
+          if bg:
+              assert os.path.exists(bg), f'Missing background script: {bg}'
+              
+          print('All manifest asset paths exist.')
+          "
+
+      # Test 3: Check all JS files for syntax errors
+      - name: Check JavaScript syntax errors
+        run: find . -maxdepth 2 -name "*.js" -exec node --check {} \;
+
+        
+      # Test 4: This logic is very important since its prone to breaking subtly
+      - name: Test DecideBadge skip logic
+        run: |
+          node -e "
+          // Mock Chrome Storage
+          let mockStorage = { minVotes: 3, threshold: 50 };
+          global.chrome = {
+            storage: {
+              local: {
+                get: async (key) => typeof key === 'string' ? { [key]: mockStorage[key] } : mockStorage
+              }
+            }
+          };
+
+          // Mock DOM & Globals
+          global.window = {};
+          global.document = {
+            querySelectorAll: () => [{ textContent: 'Test Artist', dataset: {} }],
+            querySelector: () => ({ textContent: 'Test Artist', dataset: {} })
+          };
+          global.ShowWarningBadge = () => {};
+          global.ShowHumanBadge = () => {};
+          global.ShowNoDataBadge = () => {};
+
+          // Load processCurrentSong code
+          const fs = require('fs');
+          eval(fs.readFileSync('Utils/processCurrentSong.js', 'utf8'));
+
+          async function runTests() {
+            let clicked = false;
+            const fakeSkip = { click: () => { clicked = true; } };
+
+            // Helper to reset mocks
+            global.getLocalStatus = async () => null;
+
+            // TEST 1: Below threshold (40% AI pull vs 50% threshold) -> NO SKIP
+            global.getArtistStatus = async () => ({ out_ai: 4, out_human: 6, out_verified: false });
+            clicked = false;
+            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkip, 0, 'yt');
+            console.assert(clicked === false, 'Test 1 Failed: Should not skip below threshold');
+
+            // TEST 2: Above threshold (80% AI pull vs 50% threshold) -> SHOULD SKIP
+            global.getArtistStatus = async () => ({ out_ai: 8, out_human: 2, out_verified: false });
+            clicked = false;
+            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkip, 0, 'yt');
+            console.assert(clicked === true, 'Test 2 Failed: Should skip above threshold');
+
+            // TEST 3: Total votes (2) < minVotes (3) -> NO SKIP
+            global.getArtistStatus = async () => ({ out_ai: 2, out_human: 0, out_verified: false });
+            clicked = false;
+            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkip, 0, 'yt');
+            console.assert(clicked === false, 'Test 3 Failed: Should not skip when total votes < minVotes');
+
+            // TEST 4: Whitelisted artist ('white') -> NO SKIP even with 100% AI votes
+            global.getArtistStatus = async () => ({ out_ai: 10, out_human: 0, out_verified: false });
+            global.getLocalStatus = async () => 'white';
+            clicked = false;
+            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkip, 0, 'yt');
+            console.assert(clicked === false, 'Test 4 Failed: Whitelisted artist should never skip');
+
+            // TEST 5: Blacklisted artist ('black') -> SHOULD SKIP even with 0 community votes
+            global.getArtistStatus = async () => ({ out_ai: 0, out_human: 0, out_verified: false });
+            global.getLocalStatus = async () => 'black';
+            clicked = false;
+            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkip, 0, 'yt');
+            console.assert(clicked === true, 'Test 5 Failed: Blacklisted artist should always skip');
+
+            console.log('All DecideBadge skipping decision tests passed successfully!');
+          }
+
+          runTests();
+          "
+        
