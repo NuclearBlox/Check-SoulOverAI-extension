@@ -14,7 +14,7 @@
       "matches": ["https://music.youtube.com/*"],
       "js": [
         "libs/supabase.js",
-        "Utils/Badge.js",
+        "Utils/Badge.\js",
         "Utils/localList.js",
         "Utils/popUpHandling.js",
         "Utils/artistData.js",
