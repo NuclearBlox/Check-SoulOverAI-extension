@@ -6,17 +6,22 @@ if (!window.location.hostname.includes('open.spotify.com')) {
 
 console.log("loaded on spotify")
 
+const nextButtonSelector = '#main > div > div.zXqmJUq4Orp0Adt90GGA > div.itzKVxWhS4n59fp_KIVc > aside > div > div.El3q6p3dX2yPehnngMba > div > div.whjWqUAO0zpHJuoWr7oM > div.P0tzYwBLV9gZ3K6JKA5q > button:nth-child(1)' //Fudge changed this to a cleaner one that didnt work. so its messy again but works!
+const playerBarSelector = 'aside[data-testid="now-playing-bar"] div[data-testid="now-playing-widget"]' //the key isn't finding the right path, that changes too much, the key is finding defining characteristics
+const artistSelector = 'a[data-testid="context-item-info-artist"]' //even if it doesn't seem obvious at first
+const titleSelector = 'a[data-testid="context-item-link"]' //sometimes there may be multiple ways to find one element, not this time though
+
 let currentArtist = null;
 let currentTitle = null;
 let nextButton = null;
 
 function checkAndUpdateBadge() {
     if (!nextButton) {
-        nextButton = document.querySelector('#main > div > div.iRGr6yO6lPcAKUoT > div.YdGOYWQYr6kqh7KU > aside > div > div.bGZUhy7AJlUgdvzB > div > div.kBq3sMkivgMPe5qr > div.O9zMd8LexCQNrpv5 > button:nth-child(1)');
+        nextButton = document.querySelector(nextButtonSelector);
     }
     
-    const artistElement = document.querySelector('#main > div > div.iRGr6yO6lPcAKUoT > div.YdGOYWQYr6kqh7KU > aside > div > div.ZJCXNvTeX4pAS9rt > div > div.KN5KA9u52qQprYjq.PZqkGvH2tH8xbDWT > div.xSfZMAalZIg2nzIs > div > span > span > div > span > a');
-    const titleElement = document.querySelector('#main > div > div.iRGr6yO6lPcAKUoT > div.YdGOYWQYr6kqh7KU > aside > div > div.ZJCXNvTeX4pAS9rt > div > div.KN5KA9u52qQprYjq.PZqkGvH2tH8xbDWT > div.fOSYRD0ZQ7wnd6Y4 > div > span > span > div > span > a');
+    const artistElement = document.querySelector(artistSelector);
+    const titleElement = document.querySelector(titleSelector);
     
     if (!artistElement || !titleElement) {
         console.log("Elements not ready yet");
@@ -31,12 +36,22 @@ function checkAndUpdateBadge() {
         currentArtist = newArtist;
         currentTitle = newTitle;
         
-        DecideBadge('75px', '50px', '#main > div > div.iRGr6yO6lPcAKUoT > div.YdGOYWQYr6kqh7KU > aside > div > div.ZJCXNvTeX4pAS9rt > div > div.KN5KA9u52qQprYjq.PZqkGvH2tH8xbDWT > div.xSfZMAalZIg2nzIs > div > span > span > div > span > a', '#main > div > div.iRGr6yO6lPcAKUoT > div.YdGOYWQYr6kqh7KU > aside > div > div.ZJCXNvTeX4pAS9rt > div > div.mD6MFF1cf5MA9Uhb', nextButton, '4px', 'music');
+        const playerBar = document.querySelector(playerBarSelector);
+        const badgeLocation = Array.from(playerBar?.children ?? [])
+            .filter(child => !child.classList.contains('ai-warning-container') && !child.classList.contains('human-container'))
+            .at(-1);
+
+        if (!badgeLocation) {
+            console.log("[SoundProof] Badge location not ready yet");
+            return;
+        }
+
+        DecideBadge('75px', '50px', artistSelector, badgeLocation, nextButton, '4px', 'music');
     }
 }
 
 function observePlayerBar() {
-    const playerBar = document.querySelector('#main > div > div.iRGr6yO6lPcAKUoT > div.YdGOYWQYr6kqh7KU > aside') ||
+    const playerBar = document.querySelector(playerBarSelector) ||
                       document.querySelector('#main');
     
     console.log("Observing:", playerBar);
