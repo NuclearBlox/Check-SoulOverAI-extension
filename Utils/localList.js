@@ -74,6 +74,10 @@ async function getLocalStatus(artist, platformClass) {
     return localData; // 'white', 'black', or false
 }
 
+window.getLocalStatus = getLocalStatus;
+window.setLocalStatus = setLocalStatus;
+window.clearLocalStatus = clearLocalStatus;
+
 // --- Popup banner: whitelist/blacklist prompt & status ---
 
 const LOCAL_LIST_STYLES = `
@@ -321,3 +325,5 @@ async function renderLocalListBanner(shadow, artist, platformClass, status, badg
         window.showPopup(null, badge, null, artist, platformClass);
     };
 }
+
+window.renderLocalListBanner = renderLocalListBanner;
