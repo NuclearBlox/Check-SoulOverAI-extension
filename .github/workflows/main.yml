@@ -44,7 +44,7 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
 
-      - name: Run processCurrentSong execution & skip tests
+      - name: Check for glaring issues in processCurrentSong.js
         run: |
           node -e "
           const fs = require('fs');
