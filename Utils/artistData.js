@@ -34,7 +34,7 @@ function getTimeValid(status) {
     } else if (margin >= 1) {
         return 3 * 60 * 60 * 1000; // 3 hours — could flip on the next vote
     }
-    return 0; // tied or no votes — don't cache
+    return 0; // tied or no votes — don't cache for long
 }
 
 async function updateCache(key, statusdata) {
