@@ -1,4 +1,4 @@
-name: SoundProof Extension Checks
+name: Is the code soundproof? (bu bum tss)
 
 on:
   push:
@@ -44,9 +44,20 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
 
-      - name: Test DecideBadge skip logic
+      - name: Run processCurrentSong execution & skip tests
         run: |
           node -e "
+          const fs = require('fs');
+
+          // 1. STRUCTURAL CHECK: Ensure active skip command isn't commented out
+          const rawScript = fs.readFileSync('Utils/processCurrentSong.js', 'utf8');
+          const activeCode = rawScript.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
+          console.assert(
+            activeCode.includes('skipElement.click()'),
+            'CRITICAL FAIL: skipElement.click() is commented out or missing from processCurrentSong.js!'
+          );
+
+          // 2. MOCK ENVIRONMENT SETUP
           let mockStorage = { minVotes: 3, threshold: 50 };
           global.chrome = {
             storage: {
@@ -57,55 +68,57 @@ jobs:
           };
 
           global.window = {};
-          global.document = {
-            querySelectorAll: () => [{ textContent: 'Test Artist', dataset: {} }],
-            querySelector: () => ({ textContent: 'Test Artist', dataset: {} })
-          };
-          global.ShowWarningBadge = () => {};
-          global.ShowHumanBadge = () => {};
-          global.ShowNoDataBadge = () => {};
+          let fakeSkipClicked = false;
+          const fakeSkipElement = { click: () => { fakeSkipClicked = true; } };
 
-          const fs = require('fs');
-          eval(fs.readFileSync('Utils/processCurrentSong.js', 'utf8'));
+          global.document = {
+            querySelectorAll: (selector) => [{ textContent: 'Test Artist', dataset: { soundproofId: 'test_handle' } }],
+            querySelector: (selector) => ({ textContent: 'Test Artist', dataset: {} })
+          };
+
+          global.ShowWarningBadge = () => 'warning-badge';
+          global.ShowHumanBadge = () => 'human-badge';
+          global.ShowNoDataBadge = () => 'nodata-badge';
+
+          // Load processCurrentSong
+          eval(rawScript);
 
           async function runTests() {
-            let clicked = false;
-            const fakeSkip = { click: () => { clicked = true; } };
             global.getLocalStatus = async () => null;
 
-            // TEST 1: Below threshold -> NO SKIP
+            // TEST 1: Below threshold (40% AI pull vs 50% threshold) -> NO SKIP
             global.getArtistStatus = async () => ({ out_ai: 4, out_human: 6, out_verified: false });
-            clicked = false;
-            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkip, 0, 'yt');
-            console.assert(clicked === false, 'Test 1 Failed: Should not skip below threshold');
+            fakeSkipClicked = false;
+            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkipElement, 0, 'youtube');
+            console.assert(fakeSkipClicked === false, 'Test 1 Failed: Should not skip below threshold');
 
-            // TEST 2: Above threshold -> SHOULD SKIP
+            // TEST 2: Above threshold (80% AI pull vs 50% threshold) -> SHOULD SKIP
             global.getArtistStatus = async () => ({ out_ai: 8, out_human: 2, out_verified: false });
-            clicked = false;
-            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkip, 0, 'yt');
-            console.assert(clicked === true, 'Test 2 Failed: Should skip above threshold');
+            fakeSkipClicked = false;
+            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkipElement, 0, 'youtube');
+            console.assert(fakeSkipClicked === true, 'Test 2 Failed: Should skip above threshold');
 
-            // TEST 3: Total votes < minVotes -> NO SKIP
+            // TEST 3: Total votes (2) < minVotes (3) -> NO SKIP
             global.getArtistStatus = async () => ({ out_ai: 2, out_human: 0, out_verified: false });
-            clicked = false;
-            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkip, 0, 'yt');
-            console.assert(clicked === false, 'Test 3 Failed: Should not skip when total votes < minVotes');
+            fakeSkipClicked = false;
+            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkipElement, 0, 'youtube');
+            console.assert(fakeSkipClicked === false, 'Test 3 Failed: Should not skip when total votes < minVotes');
 
-            // TEST 4: Whitelisted artist -> NO SKIP
+            // TEST 4: Whitelisted artist ('white') -> NO SKIP
             global.getArtistStatus = async () => ({ out_ai: 10, out_human: 0, out_verified: false });
             global.getLocalStatus = async () => 'white';
-            clicked = false;
-            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkip, 0, 'yt');
-            console.assert(clicked === false, 'Test 4 Failed: Whitelisted artist should never skip');
+            fakeSkipClicked = false;
+            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkipElement, 0, 'youtube');
+            console.assert(fakeSkipClicked === false, 'Test 4 Failed: Whitelisted artist should never skip');
 
-            // TEST 5: Blacklisted artist -> SHOULD SKIP
+            // TEST 5: Blacklisted artist ('black') -> SHOULD SKIP
             global.getArtistStatus = async () => ({ out_ai: 0, out_human: 0, out_verified: false });
             global.getLocalStatus = async () => 'black';
-            clicked = false;
-            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkip, 0, 'yt');
-            console.assert(clicked === true, 'Test 5 Failed: Blacklisted artist should always skip');
+            fakeSkipClicked = false;
+            await window.DecideBadge(10, 10, 'selector', 'loc', fakeSkipElement, 0, 'youtube');
+            console.assert(fakeSkipClicked === true, 'Test 5 Failed: Blacklisted artist should always skip');
 
-            console.log('All DecideBadge skipping decision tests passed successfully!');
+            console.log('All processCurrentSong skipping tests passed successfully!');
           }
 
           runTests();
