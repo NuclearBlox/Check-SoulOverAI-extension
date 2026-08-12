@@ -53,7 +53,7 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
             threshold = Number(threshold ?? 50);
             if (isAI && effectiveTug >= threshold) {
                 console.log(`[SoundProof] Skipping ${artistName} — ${effectiveTug}% AI pull, threshold ${threshold || 50}%`);
-                skipElement.click();
+                // skipElement.click();
             }
         }
     }
