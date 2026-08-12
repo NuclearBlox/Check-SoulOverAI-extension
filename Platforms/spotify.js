@@ -6,7 +6,7 @@ if (!window.location.hostname.includes('open.spotify.com')) {
 
 console.log("loaded on spotify")
 
-const nextButtonSelector = 'button[data-testid="control-button-skip-forward"]' //not to hate but you kinda suck at this whole finding the right elements thing nuclear
+const nextButtonSelector = '#main > div > div.zXqmJUq4Orp0Adt90GGA > div.itzKVxWhS4n59fp_KIVc > aside > div > div.El3q6p3dX2yPehnngMba > div > div.whjWqUAO0zpHJuoWr7oM > div.P0tzYwBLV9gZ3K6JKA5q > button:nth-child(1)' //not to hate but you kinda suck at this whole finding the right elements thing nuclear
 const playerBarSelector = 'aside[data-testid="now-playing-bar"] div[data-testid="now-playing-widget"]' //the key isn't finding the right path, that changes too much, the key is finding defining characteristics
 const artistSelector = 'a[data-testid="context-item-info-artist"]' //even if it doesn't seem obvious at first
 const titleSelector = 'a[data-testid="context-item-link"]' //sometimes there may be multiple ways to find one element, not this time though
