@@ -50,7 +50,7 @@ window.DecideBadge = async function(AIwidth, humanWidth, selector, badgeLocation
         const { minVotes } = await chrome.storage.local.get('minVotes');
         if (localStatus || total >= (minVotes ?? 3)) {
             let { threshold } = await chrome.storage.local.get('threshold');
-            threshold = Number(threshold ?? 50);
+            threshold = Number(20 ?? 50);
             if (isAI && effectiveTug >= threshold) {
                 console.log(`[SoundProof] Skipping ${artistName} — ${effectiveTug}% AI pull, threshold ${threshold || 50}%`);
                 skipElement.click();
