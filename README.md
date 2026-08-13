@@ -3,10 +3,8 @@
 ## Don't want to worry about staying up to date? [Get it on the Chrome store!](https://chromewebstore.google.com/detail/detect-skip-ai-music-soul/mbfhdilbcdcnhbaakndiofeahchaclpa?authuser=0&hl=en)
 (I would greatly appreciate the ego boost of getting a download on the web store, too!)
 
-# Update on the horizon! SoundProof V6
-SoundProof is now testing V6! Adding local black and white listing of artists along with caching to save on API calls
-
-Possibly in 6.1: Direct menu for managing black/whitelisted artists
+## Taking ideas for SoundProof 6.1!
+SoundProof v6 introduced custom black and whitelisting. Accepting ideas on how to improve this further!
 
 > [!IMPORTANT]
 > If you are here because you are an artist/fan who feels unfairly blocked, you're in luck! [appeal here!](https://github.com/NuclearBlox/SoundProof-extension/wiki/Appealing-an-incorrect-rating)
@@ -20,6 +18,6 @@ It automatically checks the current track against SlopCall, an API built specifi
 
 ## Supports: Spotify, YouTube Music, SoundCloud, Apple Music
 
-Very basic right now, much to be improved!
-
+~~Very basic right now, much to be improved!~~
+**Not that basic anymore**
 ![Image showing how anyone can vote!](Examples/VoteYourSelf.png)
