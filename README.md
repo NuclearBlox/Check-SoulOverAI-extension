@@ -1,4 +1,7 @@
 # SoundProof - Detect, skip, and vote. A community-powered AI music blocklist
+[![Chrome Web Store Users](https://img.shields.io/chrome-web-store/users/mbfhdilbcdcnhbaakndiofeahchaclpa?style=for-the-badge&logo=googlechrome&color=4285F4)](https://chromewebstore.google.com/detail/detect-skip-ai-music-soun/mbfhdilbcdcnhbaakndiofeahchaclpa)
+[![Chrome Web Store Rating](https://img.shields.io/chrome-web-store/rating/mbfhdilbcdcnhbaakndiofeahchaclpa?style=for-the-badge&logo=googlechrome&color=f4b400)](https://chromewebstore.google.com/detail/detect-skip-ai-music-soun/mbfhdilbcdcnhbaakndiofeahchaclpa)
+[![License](https://img.shields.io/github/license/NuclearBlox/SoundProof-extension?style=for-the-badge&color=green)](LICENSE)
 
 ## Don't want to worry about staying up to date? [Get it on the Chrome store!](https://chromewebstore.google.com/detail/detect-skip-ai-music-soul/mbfhdilbcdcnhbaakndiofeahchaclpa?authuser=0&hl=en)
 (I would greatly appreciate the ego boost of getting a download on the web store, too!)
